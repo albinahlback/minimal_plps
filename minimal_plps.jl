@@ -16,7 +16,8 @@
 =#
 
 import Base:
-    show, rand
+    show
+#=
 import LinearAlgebra:
     norm
 import AbstractAlgebra.Generic:
@@ -37,39 +38,74 @@ import Oscar:
     ZZMPolyRing, ZZMPolyRingElem
 import Oscar:
     partitions
+=#
 
 ###############################################################################
 # computing classes of point-line balanced problems
 ###############################################################################
 
-# NOTE: We only compute the finite cases here, i.e. when m > 2 and (lf, la) are
-# not unrestricted.
+# NOTE: Recall that (m, 4, 3, 0, 0) is always minimal, and that for m = 2 the
+# line configuration is unrestricted.  Hence, we only compute the finite
+# classes here, i.e. when 2 < m ≤ 9, and remove all case where
+# (pf, pd) = (4, 3)
 
-views = [m for m in 3:9]
+is_balanced(m::Int, pf::Int, pd::Int, lf::Int, la::Int) =
+    11 * m - 15 == (2 * m - 3) * pf + (m - 1) * pd + 2 * (m - 2) * lf + (m - 2) * la
+
+struct Class
+    m::Int
+    pf::Int
+    pd::Int
+    lf::Int
+    la::Int
+
+    function Class(m::Int, pf::Int, pd::Int, lf::Int, la::Int)
+        return is_balanced(m, pf, pd, lf, la) ? new(m, pf, pd, lf, la) : error()
+    end
+
+    function Class(tp::NTuple{5, Int})
+        return Class(tp[1], tp[2], tp[3], tp[4], tp[5])
+    end
+end
+
+_m(cl::Class) = cl.m
+_pf(cl::Class) = cl.pf
+_pd(cl::Class) = cl.pd
+_lf(cl::Class) = cl.lf
+_la(cl::Class) = cl.la
+
+function show(io::IO, cl::Class)
+    m = _m(cl)
+    pf = _pf(cl)
+    pd = _pd(cl)
+    lf = _lf(cl)
+    la = _la(cl)
+
+    print(io, "Class (m, pf, pd, lf, la) = ($m, $pf, $pd, $lf, $la)")
+end
+
+finite_views = [m for m in 3:9]
 
 # All possible point configuration on the form (pf, pd).  Taken from Albin's
 # thesis.
-points = [(0, 0);
-          (1, 0);
-          (2, 0);
-          (3, 0); (2, 1);
-          (4, 0); (3, 1); (2, 2);
-          (5, 0); (4, 1); (3, 2); (2, 3);
-          (6, 0); (5, 1); (4, 2); (3, 3); (2, 4);
-          (7, 0); (6, 1); (5, 2); (4, 3); (3, 4); (2, 5);
-                                                          (2, 6)]
+possible_point_configurations =
+    [(0, 0);
+     (1, 0);
+     (2, 0);
+     (3, 0); (2, 1);
+     (4, 0); (3, 1); (2, 2);
+     (5, 0); (4, 1); (3, 2); (2, 3);
+     (6, 0); (5, 1); (4, 2); (3, 3); (2, 4);
+     (7, 0); (6, 1); (5, 2); (4, 3); (3, 4); (2, 5);
+                                                     (2, 6)]
 
-# We have that every balanced point-line problem must satisfy
-#
-#   11 m - 15 = (2m - 3) p_f + (m - 1) p_d + 2 (m - 2) l_f + (m - 2) l_a.
-#
-# We rewrite this as g = h.
-g(m, pf, pd) = (11 - 2 * pf - pd) * m - (15 - 3 * pf - pd)
-h(m, lf, la) = (m - 2) * (2 * lf + la)
+# Given (m, pf, pd), append all classes of balanced point-line problems to
+# list.
+function append_classes!(list::Vector{Class}, m::Int, pf::Int, pd::Int)
+    # We rewrite the balancedness as g = h.
+    g(m::Int, pf::Int, pd::Int) = (11 - 2 * pf - pd) * m - (15 - 3 * pf - pd)
+    h(m::Int, lf::Int, la::Int) = (m - 2) * (2 * lf + la)
 
-# Given m, pf and pd, append all classes of balanced point-line problems
-# (m, pf, pd, lf, la) to list.
-function find_lf_la(list, m, pf, pd)
     val = g(m, pf, pd)
 
     # We have that any solution fulfills g(x) = h(x).  As h(x) ≥ 0, we must
@@ -89,7 +125,7 @@ function find_lf_la(list, m, pf, pd)
         la = 0
 
         if h(m, lf, la) == val
-            append!(list, [(m, pf, pd, lf, la)])
+            push!(list, Class(m, pf, pd, lf, la))
         end
 
         return
@@ -101,27 +137,40 @@ function find_lf_la(list, m, pf, pd)
     lf = 0
     la = lx
     while la >= 0
-        append!(list, [(m, pf, pd, lf, la)])
+        push!(list, Class(m, pf, pd, lf, la))
         la -= 2
         lf += 1
     end
 end
 
 # Returns a list of all classes of balanced point-line problems.
-function balanced_classes()
-    list = NTuple{5, Int64}[]
-    for m in views
-        for p in points
+function calculate_balanced_classes()
+    list = Class[]
+    for m in finite_views
+        for p in possible_point_configurations
             pf = p[1]
             pd = p[2]
-            find_lf_la(list, m, pf, pd)
+            append_classes!(list, m, pf, pd)
         end
     end
     return list
 end
 
-balanced_plps = balanced_classes()
+balanced_classes = calculate_balanced_classes()
 
+# We know that problems containing four points on a line or six points on a
+# plane cannot be minimal.  Hence, remove classes that only contain such
+# problems.
+feasible_balanced_classes = filter(
+    x -> !((_pf(x) ≤ 2 && _pd(x) ≥ 2) || (_pf(x) ≤ 3 && _pd(x) ≥ 3)),
+    balanced_classes)
+
+# We can settle all cases with pf + pd = 7 by hand, so we only care about the
+# cases with less than seven points.
+interesting_balanced_classes = filter(
+    x -> (_pf(x) + _pd(x) < 7), feasible_balanced_classes)
+
+#=
 ###############################################################################
 # computing classes of point-line balanced problems
 ###############################################################################
@@ -156,9 +205,6 @@ function collect_partitions(m::Int, n::Int)
 
     return res
 end
-
-is_balanced(m::Int, pf::Int, pd::Int, lf::Int, la::Int) =
-    11 * m - 15 == (2 * m - 3) * pf + (m - 1) * pd + 2 * (m - 2) * lf + (m - 2) * la
 
 is_canonical_pd0(x1::Int) = true
 is_canonical_pd1(x1::Int, x2::Int) = true
@@ -201,38 +247,6 @@ is_canonical_pd2_2(x1::Int, x2::Int, args...) = (x1 >= x2)
 #
 # In order to distribute the adjacent lines, we group the points together.
 # Within these groups, we partition the assigned adjacent lines.
-
-struct Class
-    m::Int
-    pf::Int
-    pd::Int
-    lf::Int
-    la::Int
-
-    function Class(m::Int, pf::Int, pd::Int, lf::Int, la::Int)
-        return is_balanced(m, pf, pd, lf, la) ? new(m, pf, pd, lf, la) : error()
-    end
-
-    function Class(tp::NTuple{5, Int})
-        return Class(tp[1], tp[2], tp[3], tp[4], tp[5])
-    end
-end
-
-_m(cl::Class) = cl.m
-_pf(cl::Class) = cl.pf
-_pd(cl::Class) = cl.pd
-_lf(cl::Class) = cl.lf
-_la(cl::Class) = cl.la
-
-function show(io::IO, cl::Class)
-    m = _m(cl)
-    pf = _pf(cl)
-    pd = _pd(cl)
-    lf = _lf(cl)
-    la = _la(cl)
-
-    print(io, "Class (m, pf, pd, lf, la) = ($m, $pf, $pd, $lf, $la)")
-end
 
 # Groups refers to partition groups
 struct ProblemType
@@ -514,9 +528,10 @@ end
 ###############################################################################
 # List of candidate classes excl. (pf, pd) = (4, 3)
 ###############################################################################
+=#
 
-balanced_classes = [
-(2, 2, 5, 0, 0), (2, 3, 4, 0, 0), (2, 4, 3, 0, 0), (2, 5, 2, 0, 0), (2, 6, 1, 0, 0), (2, 7, 0, 0, 0),
+hard_balanced_classes = [
+# (2, 2, 5, 0, 0), (2, 3, 4, 0, 0), (2, 4, 3, 0, 0), (2, 5, 2, 0, 0), (2, 6, 1, 0, 0), (2, 7, 0, 0, 0),
 
 (3, 0, 0, 9, 0), (3, 1, 0, 0, 15), (3, 1, 0, 1, 13), (3, 1, 0, 2, 11), (3, 1, 0, 3, 9), (3, 1, 0, 4, 7),
 (3, 1, 0, 5, 5), (3, 1, 0, 6, 3), (3, 1, 0, 7, 1), (3, 2, 0, 0, 12), (3, 2, 0, 1, 10), (3, 2, 0, 2, 8),
@@ -568,7 +583,8 @@ function candidate_filter(cl::NTuple{5, Int})
     end
 end
 
-candidate_classes = filter(candidate_filter, balanced_classes)
+candidate_classes = filter(candidate_filter, hard_balanced_classes)
+#=
 
 # Also remove (pf, pd) = (4, 3) since this case is already settled.
 candidate_classes = filter(x -> !(x[2] == 4 && x[3] == 3), candidate_classes)
@@ -1461,3 +1477,4 @@ function _print_all_tikz(scale::Float64 = 1.0)
     end
     print(str)
 end
+=#

@@ -29,6 +29,7 @@ import AbstractAlgebra:
     is_one, is_zero,
     derivative,
     ncols, nrows,
+    number_of_variables,
     lcm, is_invertible
 import Oscar:
     Partition,
@@ -36,7 +37,7 @@ import Oscar:
     zzModMPolyRing, zzModMPolyRingElem,
     ZZMPolyRing, ZZMPolyRingElem
 import Oscar:
-    partitions
+    partitions, evaluate, det
 
 ###############################################################################
 ###############################################################################
@@ -713,7 +714,7 @@ struct CXElem
             lx[1:2, 1] = new_gens[(1 + 2 * ix):(2 + 2 * ix)]
             lx[3:4, 1] = [o1; z0]
 
-            while new_adjs[jx] != 0
+            while new_adjs[jx] == 0
                 jx += 1
             end
             new_adjs[jx] -= 1
@@ -725,6 +726,7 @@ struct CXElem
             end
             push!(las, lx)
         end
+        @assert is_zero(new_adjs)
 
         return new(pb, R, cms, pfs, pds, lfs, las)
     end
@@ -805,8 +807,12 @@ struct ImageVarietyElem
         deps = pb.deps
         R = niv.R
         K = fraction_field(R)
-        entries = zeros(K, 11 * m - 15)
+        entries = zeros(K, m * dim_image_space(pf, pd, lf, la))
         new_entries = view(entries, 1:length(entries))
+        pfs = view(niv.pfs, 1:length(niv.pfs))
+        pds = view(niv.pds, 1:length(niv.pds))
+        lfs = view(niv.lfs, 1:length(niv.lfs))
+        las = view(niv.las, 1:length(niv.las))
 
         #######################################################################
         # free points
@@ -829,6 +835,10 @@ struct ImageVarietyElem
         # A dependent point p = t x + (1 - t) y between two free points x and y
         # is completely determined by t = (p_i - b_i) / (a_i - b_i), where i is
         # arbitrary.
+
+        # We have to reset pfs here since it is shifted from before
+        pfs = view(niv.pfs, 1:length(niv.pfs))
+
         for ix in 1:m
             for jx in 1:pd
                 ax, bx = deps[jx][1], deps[jx][2]
@@ -837,8 +847,8 @@ struct ImageVarietyElem
                 v1 = pds[jx][1, 1] // pds[jx][3, 1]
                 new_entries[jx] = (v1 - b1) // (a1 - b1)
             end
-            pfs = view(niv.pfs, (pf + 1):length(niv.pfs))
-            pds = view(niv.pds, (pd + 1):length(niv.pds))
+            pfs = view(pfs, (pf + 1):length(pfs))
+            pds = view(pds, (pd + 1):length(pds))
             new_entries = view(new_entries, (pd + 1):length(new_entries))
         end
 
@@ -861,7 +871,7 @@ struct ImageVarietyElem
                 new_entries[2 * (jx - 1) + 1] = k1 // admbc
                 new_entries[2 * (jx - 1) + 2] = k2 // admbc
             end
-            lfs = view(niv.lfs, (lf + 1):length(niv.lfs))
+            lfs = view(lfs, (lf + 1):length(lfs))
             new_entries = view(new_entries, (2 * lf + 1):length(new_entries))
         end
 
@@ -876,123 +886,136 @@ struct ImageVarietyElem
                 k1 = las[jx][1, 1]
                 k2 = las[jx][2, 1]
                 k3 = las[jx][3, 1]
-                y3 = las[jx][1, 3]
+                y3 = las[jx][3, 2]
                 y1 = las[jx][1, 2] // y3
                 y2 = las[jx][2, 2] // y3
-                new_entries[jx] = (k2 - k3 y2) // (k1 - k3 y1)
+                new_entries[jx] = (k2 - k3 * y2) // (k1 - k3 * y1)
             end
-            las = view(niv.las, (la + 1):length(niv.las))
+            las = view(las, (la + 1):length(las))
             new_entries = view(new_entries, (la + 1):length(new_entries))
         end
 
         return new(pb, R, K, entries)
     end
+
+    function ImageVarietyElem(pb::Problem)
+        # Get the symbolic representation C_{m} × X_{p, l, I} of problem
+        cx = CXElem(pb)
+
+        # Map naïvely to images
+        niv = NaiveImageVarietyElem(cx)
+
+        return ImageVarietyElem(niv)
+    end
 end
 
+class(iv::ImageVarietyElem) = iv.pb.cl
+field(iv::ImageVarietyElem) = iv.K
+
 ###############################################################################
-# Jacobian
+# jacobian
 ###############################################################################
 
 function jacobian(iv::ImageVarietyElem)
-    cl = iv.pb.cl
     entries = iv.entries
-    num_cvars = num_vars_cms(cl)
+    cl = class(iv)
+    n = num_vars(cl)
+    K = field(iv)
 
-    @assert length(entries) == num_cvars
+    # Ensure that Jacobian really is square
+    @assert length(entries) == n
 
-    M = matrix_space(iv.K, num_cvars, num_cvars)
+    M = matrix_space(K, n, n)
     jac = zero(M)
 
-    for ix in 1:num_cvars, jx in 1:num_cvars
+    for ix in 1:n, jx in 1:n
         jac[ix, jx] = derivative(entries[jx], ix)
     end
 
     return jac
 end
 
-function jacobian(pb::Problem)
-    # Get the symbolic representation C_{m} × X_{p, l, I} of problem
-    cx = CXElem(pb)
+jacobian(pb::Problem) = jacobian(ImageVarietyElem(pb))
 
-    # Map naively to images
-    niv = NaiveImageVarietyElem(cx)
+# NOTE: This will destroy input
+function similar_matrix(mat::MatSpaceElem{FracFieldElem{xMPolyRingElem}})
+    n = ncols(mat)
+    K = base_ring(mat)
+    R = base_ring(K)
 
-    # Get efficient representation of images
-    iv = ImageVarietyElem(niv)
-
-    # Get Jacobian
-    return jacobian(iv)
-end
-
-# To avoid fraction field, we multiply each column with the LCM of that column
-# to reduce the matrix.
-function similar_jacobian(pb::Problem)
-    # Get the symbolic representation C_{m} × X_{p, l, I} of problem
-    cx = CXElem(pb)
-
-    # Map naively to images
-    niv = NaiveImageVarietyElem(cx)
-
-    # Get efficient representation of images
-    iv = ImageVarietyElem(niv)
-    R = iv.R
-
-    # Get Jacobian
-    jac = jacobian(iv)
-    @assert ncols(jac) == nrows(jac)
-
-    M = matrix_space(R, nrows(jac), ncols(jac))
-    simjac = zero(M)
-
-    for jx in 1:ncols(jac)
-        col = jac[1:end, jx]
-        fac = lcm([col[ix].den for ix in 1:length(col)])
-
-        for ix in 1:nrows(jac)
-            tmp = fac * jac[ix, jx]
-            @assert is_one(tmp.den)
-
-            simjac[ix, jx] = tmp.num
+    for ix in 1:n, jx in 1:n
+        if !is_one(denominator(mat[ix, jx]))
+            den = denominator(mat[ix, jx])
+            for ix2 in 1:n
+                mat[ix2, jx] *= den
+            end
         end
     end
 
-    return simjac
+    @assert all(x -> is_one(denominator(x)), mat)
+
+    M = matrix_space(R, n, n)
+    simmat = M()
+    for ix in 1:n, jx in 1:n
+        simmat[ix, jx] = numerator(mat[ix, jx])
+    end
+
+    return simmat
 end
 
 ###############################################################################
-# Minimality
+# numerical minimality check
 ###############################################################################
 
-function is_minimal(pb::Problem; symbolic::Bool = false, numevals::Int = 100)
-    # Get similar Jacobian
-    jac = similar_jacobian(pb)
+function is_minimal(pb::Problem; numevals::Int = 1000)
+    # Get symbolical jacobian
+    jac = jacobian(pb)
+    simjac = similar_matrix(jac)
 
-    if symbolic
-        return is_invertible(jac)
+    n = ncols(simjac)
+    P = base_ring(simjac)
+    nvars = number_of_variables(P)
+    K = base_ring(P)
+    M = matrix_space(K, n, n)
+    jaceval = M()
+
+    for nx in 1:numevals
+        for ix in 1:n, jx in 1:n
+            jaceval[ix, jx] = evaluate(simjac[ix, jx], rand(K, nvars))
+        end
+
+        if !is_zero(det(jaceval))
+            return true
+        end
     end
 
-    if !small_field
-        error()
-    end
-
-    numvars = num_vars(pb.cl)
-    P = base_ring(jac)
-    R = base_ring(P)
-    M = matrix_space(R, nrows(jac), ncols(jac))
-    jaceval = zero(M)
-
-    for ix in 1:nrows(jaceval), jx in 1:ncols(jaceval)
-        jaceval[ix, jx] = evaluate(jac[ix, jx], rand(R, numvars))
-    end
-
-    return !is_zero(det(jaceval))
+    return false
 end
 
 ###############################################################################
-# generate pictures in 2D
+# test minimality
 ###############################################################################
 
-# NOTE: This section is very much non-optimized!
+function test_minimality(numevals::Int = 1000)
+    num_minimal_problems = 0
+
+    for pb in candidate_problems
+        if is_minimal(pb, numevals = numevals)
+            num_minimal_problems += 1
+        end
+    end
+
+    return num_minimal_problems
+end
+
+###############################################################################
+###############################################################################
+# generate nice TikZed 2D-pictures of problems
+###############################################################################
+###############################################################################
+
+# NOTE: This section is very much non-optimized and can be tweaked further!
+# Use at your own risk!
 
 struct ProblemInstance
     pfs::Matrix{Float64}

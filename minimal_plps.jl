@@ -17,7 +17,6 @@
 
 import Base:
     show
-#=
 import LinearAlgebra:
     norm
 import AbstractAlgebra.Generic:
@@ -38,19 +37,34 @@ import Oscar:
     ZZMPolyRing, ZZMPolyRingElem
 import Oscar:
     partitions
-=#
 
 ###############################################################################
-# computing classes of point-line balanced problems
+###############################################################################
+# computing candidate problems
+###############################################################################
+###############################################################################
+
+###############################################################################
+# computing classes of point-line balanced problems for less than seven points
 ###############################################################################
 
 # NOTE: Recall that (m, 4, 3, 0, 0) is always minimal, and that for m = 2 the
 # line configuration is unrestricted.  Hence, we only compute the finite
 # classes here, i.e. when 2 < m ≤ 9, and remove all case where
-# (pf, pd) = (4, 3)
+# (pf, pd) = (4, 3).
 
-is_balanced(m::Int, pf::Int, pd::Int, lf::Int, la::Int) =
-    11 * m - 15 == (2 * m - 3) * pf + (m - 1) * pd + 2 * (m - 2) * lf + (m - 2) * la
+dim_camera_space(m::Int) = 11 * m - 15
+
+dim_point_line_space(pf::Int, pd::Int, lf::Int, la::Int) =
+    3 * pf + pd + 4 * lf + 2 * la
+
+dim_image_space(pf::Int, pd::Int, lf::Int, la::Int) =
+    2 * pf + pd + 2 * lf + la
+
+function is_balanced(m::Int, pf::Int, pd::Int, lf::Int, la::Int)
+    dim_camera_space(m) + dim_point_line_space(pf, pd, lf, la) ==
+        m * dim_image_space(pf, pd, lf, la)
+end
 
 struct Class
     m::Int
@@ -60,11 +74,8 @@ struct Class
     la::Int
 
     function Class(m::Int, pf::Int, pd::Int, lf::Int, la::Int)
-        return is_balanced(m, pf, pd, lf, la) ? new(m, pf, pd, lf, la) : error()
-    end
-
-    function Class(tp::NTuple{5, Int})
-        return Class(tp[1], tp[2], tp[3], tp[4], tp[5])
+        @assert is_balanced(m, pf, pd, lf, la)
+        return new(m, pf, pd, lf, la)
     end
 end
 
@@ -170,60 +181,24 @@ feasible_balanced_classes = filter(
 interesting_balanced_classes = filter(
     x -> (_pf(x) + _pd(x) < 7), feasible_balanced_classes)
 
-#=
 ###############################################################################
 # computing classes of point-line balanced problems
 ###############################################################################
 
-# NOTE: We will only treat candidate problems where pd <= 2.
-
 small_field = true
-big_prime = 0xffffffffffffffc5
+big_prime = UInt(0xffffffffffffffc5) # Biggest 64-bit prime
 
-if small_field
-    const xMPolyRing = zzModMPolyRing
-    const xMPolyRingElem = zzModMPolyRingElem
+@static if small_field
+    xMPolyRing = zzModMPolyRing
+    xMPolyRingElem = zzModMPolyRingElem
 else
-    const xMPolyRing = ZZMPolyRing
-    const xMPolyRingElem = ZZMPolyRingElem
+    xMPolyRing = ZZMPolyRing
+    xMPolyRingElem = ZZMPolyRingElem
 end
 
-# Partition `m` into at most `n` parts.
-function collect_partitions(m::Int, n::Int)
-    res = Partition{Int}[]
-
-    if m == 0
-        rx = collect(partitions(1, 1))
-        rx[1][1] = 0
-        append!(res, rx)
-    else
-        for ix in 1:n
-            rx = collect(partitions(m, ix))
-            append!(res, rx)
-        end
-    end
-
-    return res
-end
-
-is_canonical_pd0(x1::Int) = true
-is_canonical_pd1(x1::Int, x2::Int) = true
-is_canonical_pd2_1(x1::Int, x2::Int, x3::Int, args...) = (x2 >= x3)
-is_canonical_pd2_2(x1::Int, x2::Int, args...) = (x1 >= x2)
-
 ###############################################################################
-# Encoding
+# problem types typedef
 ###############################################################################
-
-# POINT ENUMERATION
-#
-# We enumerate points as
-#
-#   x_{1}, ..., x_{pf}, d_{1}, ..., d_{pd}.
-#
-# That is, in the list of points, the m-th free point will be at
-# index m in the list of points, while the n-th dependent point will be at
-# index pf + n.
 
 # TYPES
 #
@@ -245,16 +220,24 @@ is_canonical_pd2_2(x1::Int, x2::Int, args...) = (x1 >= x2)
 
 # GROUPING
 #
-# In order to distribute the adjacent lines, we group the points together.
-# Within these groups, we partition the assigned adjacent lines.
+# In order to distribute the adjacent lines into non-equivalent problems, we
+# group the points together.  Within these groups, we partition the assigned
+# adjacent lines.
 
-# Groups refers to partition groups
+# We will assume that pd ≤ 2
+@assert maximum(x -> _pd(x), interesting_balanced_classes) ≤ 2
+
+is_canonical_pd0(x1::Int) = true
+is_canonical_pd1(x1::Int, x2::Int) = true
+is_canonical_pd2_1(x1::Int, x2::Int, x3::Int, args...) = (x2 >= x3)
+is_canonical_pd2_2(x1::Int, x2::Int, args...) = (x1 >= x2)
+
 struct ProblemType
     cl::Class
     deps::Vector{Tuple{Int, Int}}
     numgrps::Int
     grps::Vector{Vector{Int}}
-    is_canonical::Function # For checking if assignment of adjacent lines to groups is canonical
+    is_canonical::Function
 
     function ProblemType(m::Int, pf::Int, pd::Int, lf::Int, la::Int, type::Int)
         if m < 2 || pf < 0 || pd < 0 || lf < 0 || la < 0 ||
@@ -334,6 +317,19 @@ function show(io::IO, px::ProblemType)
     end
 end
 
+###############################################################################
+# problem typedefs
+###############################################################################
+
+# POINT ENUMERATION
+#
+# We enumerate points as
+#
+#   x_{1}, ..., x_{pf}, d_{1}, ..., d_{pd}.
+#
+# That is, in the list of points, the m-th free point will be at index m in the
+# list of points, while the n-th dependent point will be at index pf + n.
+
 # Get all problems from problem type
 # Use partitions from Oscar to get all problems
 struct Problem
@@ -373,37 +369,30 @@ function show(io::IO, px::Problem)
 end
 
 ###############################################################################
-# Enumerating all problems
+# compute all problems from problem types from classes
 ###############################################################################
 
-# Number of type problems in candidate classes
-function number_of_types(pf::Int, pd::Int)
-    if pf < 0 || pd < 0 || (pd > 0 && pf < 2)
-        error()
-    elseif pd < 2
-        return 1
-    elseif pf == 3 && pd == 2
-        return 1
-    elseif pf >= 4 && pd == 2
-        return 2
-    else
-        error()
-    end
-end
+# Partition `m` into at most `n` parts.
+function collect_partitions(m::Int, n::Int)
+    res = Partition{Int}[]
 
-function problems(cl::Class)
-    numtypes = number_of_types(cl.pf, cl.pd)
-    pts = [ProblemType(cl, tx) for tx in 1:numtypes]
-    pbs = Problem[]
-    for pt in pts
-        append!(pbs, problems(pt))
+    if m == 0
+        rx = collect(partitions(1, 1))
+        rx[1][1] = 0
+        append!(res, rx)
+    else
+        for ix in 1:n
+            rx = collect(partitions(m, ix))
+            append!(res, rx)
+        end
     end
-    return pbs
+
+    return res
 end
 
 function problems(pt::ProblemType)
-    numpts = pt.cl.pf + pt.cl.pd
-    la = pt.cl.la
+    numpts = _pf(pt) + _pd(pt)
+    la = _la(pt)
     numgrps = pt.numgrps
     grps = pt.grps
     is_canonical = pt.is_canonical
@@ -525,85 +514,43 @@ function problems(pt::ProblemType)
     return pbs
 end
 
-###############################################################################
-# List of candidate classes excl. (pf, pd) = (4, 3)
-###############################################################################
-=#
-
-hard_balanced_classes = [
-# (2, 2, 5, 0, 0), (2, 3, 4, 0, 0), (2, 4, 3, 0, 0), (2, 5, 2, 0, 0), (2, 6, 1, 0, 0), (2, 7, 0, 0, 0),
-
-(3, 0, 0, 9, 0), (3, 1, 0, 0, 15), (3, 1, 0, 1, 13), (3, 1, 0, 2, 11), (3, 1, 0, 3, 9), (3, 1, 0, 4, 7),
-(3, 1, 0, 5, 5), (3, 1, 0, 6, 3), (3, 1, 0, 7, 1), (3, 2, 0, 0, 12), (3, 2, 0, 1, 10), (3, 2, 0, 2, 8),
-(3, 2, 0, 3, 6), (3, 2, 0, 4, 4), (3, 2, 0, 5, 2), (3, 2, 0, 6, 0), (3, 2, 1, 0, 10), (3, 2, 1, 1, 8),
-(3, 2, 1, 2, 6), (3, 2, 1, 3, 4), (3, 2, 1, 4, 2), (3, 2, 1, 5, 0), (3, 2, 2, 0, 8), (3, 2, 2, 1, 6),
-(3, 2, 2, 2, 4), (3, 2, 2, 3, 2), (3, 2, 2, 4, 0), (3, 2, 3, 0, 6), (3, 2, 3, 1, 4), (3, 2, 3, 2, 2),
-(3, 2, 3, 3, 0), (3, 2, 4, 0, 4), (3, 2, 4, 1, 2), (3, 2, 4, 2, 0), (3, 2, 5, 0, 2), (3, 2, 5, 1, 0),
-(3, 2, 6, 0, 0), (3, 3, 0, 0, 9), (3, 3, 0, 1, 7), (3, 3, 0, 2, 5), (3, 3, 0, 3, 3), (3, 3, 0, 4, 1),
-(3, 3, 1, 0, 7), (3, 3, 1, 1, 5), (3, 3, 1, 2, 3), (3, 3, 1, 3, 1), (3, 3, 2, 0, 5), (3, 3, 2, 1, 3),
-(3, 3, 2, 2, 1), (3, 3, 3, 0, 3), (3, 3, 3, 1, 1), (3, 3, 4, 0, 1), (3, 4, 0, 0, 6), (3, 4, 0, 1, 4),
-(3, 4, 0, 2, 2), (3, 4, 0, 3, 0), (3, 4, 1, 0, 4), (3, 4, 1, 1, 2), (3, 4, 1, 2, 0), (3, 4, 2, 0, 2),
-(3, 4, 2, 1, 0), (3, 4, 3, 0, 0), (3, 5, 0, 0, 3), (3, 5, 0, 1, 1), (3, 5, 1, 0, 1), (3, 6, 0, 0, 0),
-
-(4, 1, 0, 0, 12), (4, 1, 0, 1, 10), (4, 1, 0, 2, 8), (4, 1, 0, 3, 6), (4, 1, 0, 4, 4), (4, 1, 0, 5, 2),
-(4, 1, 0, 6, 0), (4, 2, 1, 0, 8), (4, 2, 1, 1, 6), (4, 2, 1, 2, 4), (4, 2, 1, 3, 2), (4, 2, 1, 4, 0),
-(4, 2, 3, 0, 5), (4, 2, 3, 1, 3), (4, 2, 3, 2, 1), (4, 2, 5, 0, 2), (4, 2, 5, 1, 0), (4, 3, 0, 0, 7),
-(4, 3, 0, 1, 5), (4, 3, 0, 2, 3), (4, 3, 0, 3, 1), (4, 3, 2, 0, 4), (4, 3, 2, 1, 2), (4, 3, 2, 2, 0),
-(4, 3, 4, 0, 1), (4, 4, 1, 0, 3), (4, 4, 1, 1, 1), (4, 4, 3, 0, 0), (4, 5, 0, 0, 2), (4, 5, 0, 1, 0),
-
-(5, 1, 0, 0, 11), (5, 1, 0, 1, 9), (5, 1, 0, 2, 7), (5, 1, 0, 3, 5), (5, 1, 0, 4, 3), (5, 1, 0, 5, 1),
-(5, 2, 2, 0, 6), (5, 2, 2, 1, 4), (5, 2, 2, 2, 2), (5, 2, 2, 3, 0), (5, 2, 5, 0, 2), (5, 2, 5, 1, 0),
-(5, 3, 1, 0, 5), (5, 3, 1, 1, 3), (5, 3, 1, 2, 1), (5, 3, 4, 0, 1), (5, 4, 0, 0, 4), (5, 4, 0, 1, 2),
-(5, 4, 0, 2, 0), (5, 4, 3, 0, 0),
-
-(6, 2, 1, 0, 7), (6, 2, 1, 1, 5), (6, 2, 1, 2, 3), (6, 2, 1, 3, 1), (6, 2, 5, 0, 2), (6, 2, 5, 1, 0),
-(6, 3, 0, 0, 6), (6, 3, 0, 1, 4), (6, 3, 0, 2, 2), (6, 3, 0, 3, 0), (6, 3, 4, 0, 1), (6, 4, 3, 0, 0),
-
-(7, 2, 0, 0, 8), (7, 2, 0, 1, 6), (7, 2, 0, 2, 4), (7, 2, 0, 3, 2), (7, 2, 0, 4, 0), (7, 2, 5, 0, 2),
-(7, 2, 5, 1, 0), (7, 3, 4, 0, 1), (7, 4, 3, 0, 0),
-
-(8, 1, 0, 0, 10), (8, 1, 0, 1, 8), (8, 1, 0, 2, 6), (8, 1, 0, 3, 4), (8, 1, 0, 4, 2), (8, 1, 0, 5, 0),
-(8, 2, 5, 0, 2), (8, 2, 5, 1, 0), (8, 3, 4, 0, 1), (8, 4, 3, 0, 0),
-
-(9, 0, 0, 6, 0), (9, 2, 5, 0, 2), (9, 2, 5, 1, 0), (9, 3, 4, 0, 1), (9, 4, 3, 0, 0)
-]
-
-# Filter for classes only containing four points on a line or six points on a
-# plane
-function candidate_filter(cl::NTuple{5, Int})
-    pf = cl[2]
-    pd = cl[3]
-
-    if pf == 2 && pd >= 2
-        return false
-    elseif pf == 3 && pd >= 3
-        return false
+function number_of_types(pf::Int, pd::Int)
+    if pf < 0 || pd < 0 || (pd > 0 && pf < 2)
+        error()
+    elseif pd < 2
+        return 1
+    elseif pf == 3 && pd == 2
+        return 1
+    elseif pf >= 4 && pd == 2
+        return 2
     else
-        return true
+        error()
     end
 end
 
-candidate_classes = filter(candidate_filter, hard_balanced_classes)
-#=
-
-# Also remove (pf, pd) = (4, 3) since this case is already settled.
-candidate_classes = filter(x -> !(x[2] == 4 && x[3] == 3), candidate_classes)
-
-candidate_classes = [Class(cl) for cl in candidate_classes]
-
-###############################################################################
-# All candidate problems excl. (pf, pd) = (4, 3)
-###############################################################################
+function problems(cl::Class)
+    numtypes = number_of_types(cl.pf, cl.pd)
+    pts = [ProblemType(cl, tx) for tx in 1:numtypes]
+    pbs = Problem[]
+    for pt in pts
+        append!(pbs, problems(pt))
+    end
+    return pbs
+end
 
 candidate_problems = Problem[]
 
-for cl in candidate_classes
+for cl in interesting_balanced_classes
     append!(candidate_problems, problems(cl))
 end
 
 # FIXUP: For (pf, pd) = (3, 2), we have one symmetry more which we haven't
 # accounted for in the V shaped problem, as noted by Kim, which appear when the
 # ends has the same number of adjacent lines prescribed to them.
+#
+# Note, however, that this is the only case that this appears.  Similar things
+# could happen for other shapes, but they "cannot afford" enough adjacent lines
+# for this to become an issue.
 function fixup_filter(pb::Problem)
     cl = pb.cl
     adjs = pb.adjs
@@ -629,7 +576,7 @@ candidate_problems = filter(fixup_filter, candidate_problems)
 
 ###############################################################################
 ###############################################################################
-# Computing minimality
+# computing minimality of candidate problems
 ###############################################################################
 ###############################################################################
 
@@ -1477,4 +1424,3 @@ function _print_all_tikz(scale::Float64 = 1.0)
     end
     print(str)
 end
-=#

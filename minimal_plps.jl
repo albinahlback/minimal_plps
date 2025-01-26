@@ -584,31 +584,32 @@ candidate_problems = filter(fixup_filter, candidate_problems)
 # Symbolic representation of camera configuration and point-line variety
 ###############################################################################
 
-number_of_vars_cms(cl::Class) = 11 * _m(cl) - 15
-number_of_vars_pfs(cl::Class) = 3 * _pf(cl)
-number_of_vars_pds(cl::Class) = _pd(cl)
-number_of_vars_lfs(cl::Class) = 4 * _lf(cl)
-number_of_vars_las(cl::Class) = 2 * _la(cl)
+num_vars_cms(cl::Class) = 11 * _m(cl) - 15
+num_vars_pfs(cl::Class) = 3 * _pf(cl)
+num_vars_pds(cl::Class) = _pd(cl)
+num_vars_lfs(cl::Class) = 4 * _lf(cl)
+num_vars_las(cl::Class) = 2 * _la(cl)
 
-number_of_vars(cl::Class) = number_of_vars_cms(cl) + number_of_vars_pfs(cl) + number_of_vars_pds(cl) + number_of_vars_lfs(cl) + number_of_vars_las(cl)
+num_vars(cl::Class) = num_vars_cms(cl) + num_vars_pfs(cl) + num_vars_pds(cl) +
+                        num_vars_lfs(cl) + num_vars_las(cl)
 
 function polynomial_ring(cl::Class)
     syms = Symbol[]
     basering = (small_field) ? residue_ring(ZZ, big_prime)[1] : ZZ
 
-    for ix in 1:number_of_vars_cms(cl)
+    for ix in 1:num_vars_cms(cl)
         push!(syms, Symbol("c$ix"))
     end
-    for ix in 1:number_of_vars_pfs(cl)
+    for ix in 1:num_vars_pfs(cl)
         push!(syms, Symbol("x$ix"))
     end
-    for ix in 1:number_of_vars_pds(cl)
+    for ix in 1:num_vars_pds(cl)
         push!(syms, Symbol("d$ix"))
     end
-    for ix in 1:number_of_vars_lfs(cl)
+    for ix in 1:num_vars_lfs(cl)
         push!(syms, Symbol("l$ix"))
     end
-    for ix in 1:number_of_vars_las(cl)
+    for ix in 1:num_vars_las(cl)
         push!(syms, Symbol("a$ix"))
     end
 
@@ -641,13 +642,14 @@ struct CXElem
         lfs = MatSpaceElem{xMPolyRingElem}[]
         las = MatSpaceElem{xMPolyRingElem}[]
 
-        # cameras
+        # First camera on the form (1 0 0 0; 0 1 0 0; 0 0 1 0)
         c1 = zero(C)
         for ix in 1:3
             c1[ix, ix] = o1
         end
         push!(cms, c1)
 
+        # Second camera on the form (0 0 0 1; 1 * * *; * * * *)
         c2 = zero(C)
         c2[1, 4] = o1
         c2[2, 1] = o1
@@ -657,6 +659,7 @@ struct CXElem
 
         new_gens = gens[8:end]
 
+        # All other cameras on the form (1 * * *; * * * *; * * * *)
         for ix in 0:(m - 3)
             cx = zero(C)
             cx[1, 1] = o1
@@ -668,7 +671,7 @@ struct CXElem
 
         new_gens = new_gens[(1 + 11 * (m - 2)):end]
 
-        # free points
+        # Free points on the form (*; *; *; 1)
         for ix in 0:(pf - 1)
             px = zero(P)
             px[1:3, 1] = new_gens[(1 + 3 * ix):(3 + 3 * ix)]
@@ -678,7 +681,8 @@ struct CXElem
 
         new_gens = new_gens[(1 + 3 * pf):end]
 
-        # dependency points
+        # Dependent points on the form t * p0 + (1 - t) * p1 where t is the
+        # variable for the dependent point
         for ix in 1:pd
             t = new_gens[ix]
             px = t * pfs[deps[ix][1]] + (o1 - t) * pfs[deps[ix][2]]
@@ -687,7 +691,7 @@ struct CXElem
 
         new_gens = new_gens[(1 + pd):end]
 
-        # free lines
+        # Free lines on the form (* *; * *; 1 0; 0 1)
         for ix in 0:(lf - 1)
             lx = zero(L)
             lx[1, 1:2] = new_gens[(1 + 4 * ix):(2 + 4 * ix)]
@@ -702,7 +706,8 @@ struct CXElem
         new_adjs = deepcopy(adjs)
 
         jx = 1
-        # adjacent lines
+        # Adjacent lines on the form (* x1; * x2; 1 x3; 0 x4), where x is the
+        # point that the line is adjacent to
         for ix in 0:(la - 1)
             lx = zero(L)
             lx[1:2, 1] = new_gens[(1 + 2 * ix):(2 + 2 * ix)]
@@ -715,10 +720,8 @@ struct CXElem
 
             if jx <= pf
                 lx[1:4, 2] = pfs[jx]
-            elseif jx <= pf + pd
-                lx[1:4, 2] = pfs[jx - pf]
             else
-                error()
+                lx[1:4, 2] = pds[jx - pf]
             end
             push!(las, lx)
         end
@@ -922,7 +925,7 @@ end
 function jacobian(iv::ImageVarietyElem)
     cl = iv.pb.cl
     entries = iv.entries
-    num_cvars = number_of_vars_cms(cl)
+    num_cvars = num_vars_cms(cl)
 
     @assert length(entries) == num_cvars
 
@@ -1001,7 +1004,7 @@ function is_minimal(pb::Problem; symbolic::Bool = false, numevals::Int = 100)
         error()
     end
 
-    numvars = number_of_vars(pb.cl)
+    numvars = num_vars(pb.cl)
     P = base_ring(jac)
     R = base_ring(P)
     M = matrix_space(R, nrows(jac), ncols(jac))

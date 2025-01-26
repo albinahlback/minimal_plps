@@ -581,7 +581,7 @@ candidate_problems = filter(fixup_filter, candidate_problems)
 ###############################################################################
 
 ###############################################################################
-# Symbolic representation of camera configuration and point-line variety
+# symbolic representation of camera configuration and point-line variety
 ###############################################################################
 
 num_vars_cms(cl::Class) = 11 * _m(cl) - 15
@@ -731,7 +731,7 @@ struct CXElem
 end
 
 ###############################################################################
-# Naïve representation of image variety
+# naïve representation of image variety
 ###############################################################################
 
 # Naïve representation of Y_{p, l, I, m}
@@ -787,23 +787,12 @@ _lf(niv::NaiveImageVarietyElem) = _lf(niv.pb)
 _la(niv::NaiveImageVarietyElem) = _la(niv.pb)
 
 ###############################################################################
-# Efficient representation of image variety
+# efficient representation of image variety
 ###############################################################################
 
-# Some notes:
-#
-# - In the end, we will differentiate with respect to the camera
-#   configuration. Therefore, we do not need to use any entry corresponding to
-#   the first camera since this will vanish as we differentiate.
-#
-# - Free points correspond to 2 free variables, dep. points to 1 free variable,
-#   free lines to 2 free variables, and adj. lines to 1 free variable.
-#
-# - We represent those entries corresponding to the second camera in a more
-#   efficient way as its first row is special. In particular, free points are
-#   described by one free variable.
+# Herein, we take the naïve representation, normalize it, and push the
+# non-constant entries into a long vector `entries`.
 
-# Entries stored in terms of object, camera and index, in that order.
 struct ImageVarietyElem
     pb::Problem
     R::xMPolyRing
@@ -823,21 +812,8 @@ struct ImageVarietyElem
         # free points
         #######################################################################
 
-        # skip the first camera
-        pfs = view(niv.pfs, (pf + 1):length(niv.pfs))
-
-        # second camera
-        for jx in 1:pf
-            # We rely on that the first entry is constant. With our
-            # representation, this should equal to one.
-            @assert is_one(pfs[jx][1, 1])
-            new_entries[jx] = pfs[jx][2, 1] // pfs[jx][3, 1]
-        end
-        pfs = view(pfs, (pf + 1):length(pfs))
-        new_entries = view(new_entries, (pf + 1):length(pfs))
-
-        # rest of cameras
-        for ix in 3:m
+        # Normalize via (y1; y2; y3) -> (y1 / y3; y2 / y3; 1)
+        for ix in 1:m
             for jx in 1:pf
                 new_entries[2 * (jx - 1) + 1] = pfs[jx][1, 1] // pfs[jx][3, 1]
                 new_entries[2 * (jx - 1) + 2] = pfs[jx][2, 1] // pfs[jx][3, 1]
@@ -847,21 +823,19 @@ struct ImageVarietyElem
         end
 
         #######################################################################
-        # dep. points
+        # dependent points
         #######################################################################
 
-        # skip the first camera
-        pfs = view(niv.pfs, (pf + 1):length(niv.pfs))
-        pds = view(niv.pds, (pd + 1):length(niv.pds))
-
-        # rest of cameras
-        for ix in 2:m
+        # A dependent point p = t x + (1 - t) y between two free points x and y
+        # is completely determined by t = (p_i - b_i) / (a_i - b_i), where i is
+        # arbitrary.
+        for ix in 1:m
             for jx in 1:pd
                 ax, bx = deps[jx][1], deps[jx][2]
-                ap = pfs[ax][1, 1] // pfs[ax][3, 1]
-                bp = pfs[bx][1, 1] // pfs[bx][3, 1]
-                vp = pds[jx][1, 1] // pds[jx][3, 1]
-                new_entries[jx] = (vp - bp) // (ap - bp)
+                a1 = pfs[ax][1, 1] // pfs[ax][3, 1]
+                b1 = pfs[bx][1, 1] // pfs[bx][3, 1]
+                v1 = pds[jx][1, 1] // pds[jx][3, 1]
+                new_entries[jx] = (v1 - b1) // (a1 - b1)
             end
             pfs = view(niv.pfs, (pf + 1):length(niv.pfs))
             pds = view(niv.pds, (pd + 1):length(niv.pds))
@@ -872,11 +846,10 @@ struct ImageVarietyElem
         # free lines
         #######################################################################
 
-        # skip the first two cameras
-        lfs = view(niv.lfs, (2 * lf + 1):length(niv.lfs))
-
-        # rest of the cameras
-        for ix in 3:m
+        # A free line written on the form (k1 k2; a b; c d) is equivalent to
+        # (k1 / (a d - b c) k2 / (a d - b c); 1 0; 0 1), hence completely
+        # determined by two variables.
+        for ix in 1:m
             for jx in 1:lf
                 k1 = lfs[jx][1, 1]
                 k2 = lfs[jx][1, 2]
@@ -893,22 +866,20 @@ struct ImageVarietyElem
         end
 
         #######################################################################
-        # dep. lines
+        # adjacent lines
         #######################################################################
 
-        # skip the first two cameras
-        las = view(niv.las, (2 * la + 1):length(niv.las))
-
-        # rest of the cameras
-        for ix in 3:m
-            for jx in 1:lf
+        # An adjacent line can be written on the form (k1 y1; k2 y2; k3 1).  It
+        # is then fully described by the variable (k2 - k3 y2) / (k1 - k3 y1).
+        for ix in 1:m
+            for jx in 1:la
                 k1 = las[jx][1, 1]
                 k2 = las[jx][2, 1]
                 k3 = las[jx][3, 1]
-                y1 = las[jx][1, 2]
-                # y2 = las[jx][2, 2]
                 y3 = las[jx][1, 3]
-                new_entries[jx] = (k2 * y3 - k3 * y1) // (k1 * y3 - k3 * y1)
+                y1 = las[jx][1, 2] // y3
+                y2 = las[jx][2, 2] // y3
+                new_entries[jx] = (k2 - k3 y2) // (k1 - k3 y1)
             end
             las = view(niv.las, (la + 1):length(niv.las))
             new_entries = view(new_entries, (la + 1):length(new_entries))

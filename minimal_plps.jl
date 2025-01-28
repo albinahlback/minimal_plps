@@ -341,6 +341,10 @@ struct Problem
     function Problem(pt::ProblemType, adjs::Vector{Int})
         return new(pt.cl, pt.deps, adjs)
     end
+
+    function Problem(cl::Class, deps::Vector{Tuple{Int, Int}}, adjs::Vector{Int})
+        return new(cl, deps, adjs)
+    end
 end
 
 _m(pb::Problem) = _m(pb.cl)
@@ -720,9 +724,9 @@ struct CXElem
             new_adjs[jx] -= 1
 
             if jx <= pf
-                lx[1:4, 2] = pfs[jx]
+                lx[1:4, 2] = pfs[jx][1:4, 1]
             else
-                lx[1:4, 2] = pds[jx - pf]
+                lx[1:4, 2] = pds[jx - pf][1:4, 1]
             end
             push!(las, lx)
         end
@@ -867,9 +871,14 @@ struct ImageVarietyElem
                 bk = lfs[jx][2, 2]
                 ck = lfs[jx][3, 1]
                 dk = lfs[jx][3, 2]
-                admbc = ak * dk - bk * ck
-                new_entries[2 * (jx - 1) + 1] = k1 // admbc
-                new_entries[2 * (jx - 1) + 2] = k2 // admbc
+                # admbc = ak * dk - bk * ck
+                # new_entries[2 * (jx - 1) + 1] = k1 // admbc
+                # new_entries[2 * (jx - 1) + 2] = k2 // admbc
+                v1 = ak * dk - bk * ck
+                v2 = ck * k2 - k1 * dk
+                v3 = k1 * bk - ak * k2
+                new_entries[2 * (jx - 1) + 1] = v1 // v3
+                new_entries[2 * (jx - 1) + 2] = v2 // v3
             end
             lfs = view(lfs, (lf + 1):length(lfs))
             new_entries = view(new_entries, (2 * lf + 1):length(new_entries))

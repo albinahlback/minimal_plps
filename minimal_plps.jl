@@ -989,8 +989,9 @@ function is_minimal(pb::Problem; numevals::Int = 1000)
     jaceval = M()
 
     for nx in 1:numevals
+        randpoint = rand(K, nvars)
         for ix in 1:n, jx in 1:n
-            jaceval[ix, jx] = evaluate(simjac[ix, jx], rand(K, nvars))
+            jaceval[ix, jx] = evaluate(simjac[ix, jx], randpoint)
         end
 
         if !is_zero(det(jaceval))

@@ -170,6 +170,9 @@ end
 
 balanced_classes = calculate_balanced_classes()
 
+# Applying filter(x -> (_pf(x) + _pd(x) < 7), balanced_classes) results in the 123 classes of balanced problems 
+# as claimed at the end of the proof of Lemma 3.3; compare Table 2
+
 # We know that problems containing four points on a line or six points on a
 # plane cannot be minimal.  Hence, remove classes that only contain such
 # problems.
@@ -578,6 +581,11 @@ function fixup_filter(pb::Problem)
 end
 
 candidate_problems = filter(fixup_filter, candidate_problems)
+
+# this turn the 124 classes from Table 2 into 434 balanced problems 
+# that are candidates for being minimal, as claimed in the proof of the 
+# main Theorem 2.3 c) 
+# Note: these candidates do not contain problems violating homography Lemma 4.1
 
 ###############################################################################
 ###############################################################################
@@ -1003,6 +1011,12 @@ function is_minimal(pb::Problem; numevals::Int = 1000)
 end
 
 ###############################################################################
+# Minimality check for 2 cameras
+###############################################################################   
+
+# To Be Continued                
+
+###############################################################################
 # test minimality
 ###############################################################################
 
@@ -1018,6 +1032,9 @@ function test_minimality(numevals::Int = 1000)
     return num_minimal_problems
 end
 
+# This checks the 434 candidate problems for minimality and proves 
+# that 285 are indeed minimal, as claimed in the proof of Main Theorem 2.3 c)
+                
 ###############################################################################
 ###############################################################################
 # generate nice TikZed 2D-pictures of problems

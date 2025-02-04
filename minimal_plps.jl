@@ -171,6 +171,9 @@ end
 
 balanced_classes = calculate_balanced_classes()
 
+# Applying filter(x -> (_pf(x) + _pd(x) < 7), balanced_classes) results in the 123 classes of balanced problems 
+# as claimed at the end of the proof of Lemma 3.3; compare Table 2
+
 # We know that problems containing four points on a line or six points on a
 # plane cannot be minimal.  Hence, remove classes that only contain such
 # problems.
@@ -579,6 +582,11 @@ function fixup_filter(pb::Problem)
 end
 
 candidate_problems = filter(fixup_filter, candidate_problems)
+
+# this turn the 124 classes from Table 2 into 434 balanced problems 
+# that are candidates for being minimal, as claimed in the proof of the 
+# main Theorem 2.3 c) 
+# Note: these candidates do not contain problems violating homography Lemma 4.1
 
 ###############################################################################
 ###############################################################################
@@ -1004,6 +1012,12 @@ function is_minimal(pb::Problem; numevals::Int = 1000)
 end
 
 ###############################################################################
+# minimality check for 2 cameras
+###############################################################################   
+
+# TODO
+
+###############################################################################
 # generate all minimal problems
 ###############################################################################
 
@@ -1019,6 +1033,9 @@ function generate_minimal_problems(numevals::Int = 1000)
     return res
 end
 
+# This checks the 434 candidate problems for minimality and proves 
+# that 285 are indeed minimal, as claimed in the proof of Main Theorem 2.3 c)
+                
 ###############################################################################
 # all minimal problems
 ###############################################################################
@@ -1042,8 +1059,6 @@ function print_problem_array(pbs::Vector{Problem})
     return str
 end
 =#
-# It should be noted that the 285 are present even when numevals = 1, so 285 is
-# probably the true amount.
 
 minimal_problems = [
     Problem(Class(3, 0, 0, 9, 0), Tuple{Int64, Int64}[], Int64[]),

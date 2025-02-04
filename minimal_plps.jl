@@ -1416,7 +1416,7 @@ function system_of_polynomials(
 end
 
 # Assumes that pb is a minimal problem
-function degree(pb::Problem; verify_solution::Bool = false)
+function degree(pb::Problem; verify_solution::Bool = false, ix::Int = -1)
     iv = ImageVarietyElem(pb)
     n = length(iv.entries)
     vars = (@var x[1:2*n])[1]
@@ -1436,7 +1436,11 @@ function degree(pb::Problem; verify_solution::Bool = false)
     num_solutions = nsolutions(res)
 
     if verify_solution
-        @assert verify_solution_completeness(res, show_progress = false)
+        print("Verifying solution for $ix...")
+        @assert ix > 0
+        @assert num_solutions == degs[ix]
+        @assert verify_solution_completeness(F, res, show_progress = false)
+        println("Done!")
     end
 
     return num_solutions
@@ -1449,7 +1453,7 @@ function compute_all_degrees(; verify_solution::Bool = false, verbose::Bool = fa
         if verbose
             print("Doing $ix/$(length(minimal_problems))...")
         end
-        deg = degree(pb, verify_solution = verify_solution)
+        deg = degree(pb, verify_solution = verify_solution, ix = ix)
         degs[ix] = deg
         if verbose
             println(" Done!")

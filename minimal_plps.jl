@@ -30,15 +30,19 @@ import AbstractAlgebra:
     derivative,
     ncols, nrows,
     number_of_variables,
-    lcm, is_invertible
+    lcm, is_invertible,
+    coefficients, exponent_vectors
 import Oscar:
     Partition,
     ZZ,
     zzModMPolyRing, zzModMPolyRingElem,
-    ZZMPolyRing, ZZMPolyRingElem
+    ZZMPolyRing, ZZMPolyRingElem,
+    MPolyRingElem, RingElement
 import Oscar:
-    partitions, evaluate, det
-import HomotopyContinuation: @var
+    partitions, evaluate, det, denominator, numerator
+import HomotopyContinuation: @var, System, solve, solutions, monodromy_solve,
+                             nsolutions, verify_solution_completeness
+import HomotopyContinuation.ModelKit: Variable, Expression
 
 ###############################################################################
 ###############################################################################
@@ -1356,6 +1360,104 @@ minimal_problems = [
 
 # For degree computations, we must assume that a problem is minimal.  We will
 # use the list of minimal problems `minimal_problems' to compute the degrees.
+
+###############################################################################
+# helper functions
+###############################################################################
+
+# HomotopyContinuation.jl does not provide a way to convert from Oscar
+# polynomials to their polynomials.  Hence, we write our own.
+function evaluate(poly::MPolyRingElem{T}, vals::Vector{Variable}) where {T <: RingElement}
+    @assert length(vals) == number_of_variables(parent(poly))
+
+    res = Expression(0)
+    for (cf, exp) in zip(coefficients(poly), exponent_vectors(poly))
+        term = Expression(Int(cf))
+        for ix in 1:length(vals)
+            if !iszero(exp[ix])
+                term *= vals[ix]^exp[ix]
+            end
+        end
+        res += term
+    end
+
+    return res
+end
+
+###############################################################################
+# main functions
+###############################################################################
+
+# Go from Problem to system of polynomials in terms of HomotopyContinuation.
+# Uses vars[1:n] for iv, and vars[n+1:2*n] for the additional variables.
+function system_of_polynomials(
+        iv::ImageVarietyElem,
+        vars::Vector{Variable},
+        n::Int
+    )
+    entries = iv.entries
+    R = iv.R
+
+    n = length(entries)
+    res = zeros(Expression, n)
+
+    @assert length(entries) == n
+    @assert number_of_variables(R) == n
+
+    for ix in 1:n
+        f = denominator(entries[ix])
+        g = numerator(entries[ix])
+        fe = evaluate(f, vars[1:n])
+        ge = evaluate(g, vars[1:n])
+        res[ix] = fe - vars[n + ix] * ge
+    end
+
+    return res
+end
+
+# Assumes that pb is a minimal problem
+function degree(pb::Problem; verify_solution::Bool = false)
+    iv = ImageVarietyElem(pb)
+    n = length(iv.entries)
+    vars = (@var x[1:2*n])[1]
+    system = system_of_polynomials(iv, vars, n)
+
+    U = vars[1:n]
+    V = vars[n+1:2*n]
+
+    F = System(system, variables = U, parameters = V)
+    F0 = System(system, variables = V, parameters = U)
+
+    U0 = randn(ComplexF64, n)
+    S0 = solve(F0, start_system = :total_degree, target_parameters = U0)
+    V0 = solutions(S0)[1]
+
+    res = monodromy_solve(F, U0, V0, show_progress = false)
+    num_solutions = nsolutions(res)
+
+    if verify_solution
+        @assert verify_solution_completeness(res, show_progress = false)
+    end
+
+    return num_solutions
+end
+
+function compute_all_degrees(; verify_solution::Bool = false, verbose::Bool = false)
+    pb_degs = Tuple{Problem, Int}[]
+
+    for (ix, pb) in enumerate(minimal_problems)
+        if verbose
+            print("Doing $ix/$(length(minimal_problems))...")
+        end
+        deg = degree(pb, verify_solution = verify_solution)
+        push!(pb_degs, (pb, deg))
+        if verbose
+            println(" Done!")
+        end
+    end
+
+    return pb_degs
+end
 
 ###############################################################################
 ###############################################################################

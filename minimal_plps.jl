@@ -39,25 +39,20 @@ import Oscar:
     ZZMPolyRing, ZZMPolyRingElem,
     MPolyRingElem, RingElement
 import Oscar:
-    partitions, evaluate, det, denominator, numerator
+    partitions, evaluate, det, denominator, numerator, is_prime
 import HomotopyContinuation: @var, System, solve, solutions, monodromy_solve,
                              nsolutions, verify_solution_completeness
 import HomotopyContinuation.ModelKit: Variable, Expression
 
 ###############################################################################
 ###############################################################################
-# computing candidate problems
+# computing candidate problems where p < 7
 ###############################################################################
 ###############################################################################
 
 ###############################################################################
 # computing classes of point-line balanced problems for less than seven points
 ###############################################################################
-
-# NOTE: Recall that (m, 4, 3, 0, 0) is always minimal, and that for m = 2 the
-# line configuration is unrestricted.  Hence, we only compute the finite
-# classes here, i.e. when 2 < m ≤ 9, and remove all case where
-# (pf, pd) = (4, 3).
 
 dim_camera_space(m::Int) = 11 * m - 15
 
@@ -175,8 +170,9 @@ end
 
 balanced_classes = calculate_balanced_classes()
 
-# Applying filter(x -> (_pf(x) + _pd(x) < 7), balanced_classes) results in the 123 classes of balanced problems 
-# as claimed at the end of the proof of Lemma 3.3; compare Table 2
+# Applying filter(x -> (_pf(x) + _pd(x) < 7), balanced_classes) results in the
+# 123 classes of balanced problems as claimed at the end of the proof of
+# Lemma 3.3; compare Table 2
 
 # We know that problems containing four points on a line or six points on a
 # plane cannot be minimal.  Hence, remove classes that only contain such
@@ -185,8 +181,7 @@ feasible_balanced_classes = filter(
     x -> !((_pf(x) ≤ 2 && _pd(x) ≥ 2) || (_pf(x) ≤ 3 && _pd(x) ≥ 3)),
     balanced_classes)
 
-# We can settle all cases with pf + pd = 7 by hand, so we only care about the
-# cases with less than seven points.
+# In this part we only care about problems with less than seven points.
 interesting_balanced_classes = filter(
     x -> (_pf(x) + _pd(x) < 7), feasible_balanced_classes)
 
@@ -194,15 +189,17 @@ interesting_balanced_classes = filter(
 # computing classes of point-line balanced problems
 ###############################################################################
 
-small_field = false
-big_prime = UInt(0xffffffffffffffc5) # Biggest 64-bit prime
+small_field = true
+big_prime = UInt(281474976710677)
+@assert is_prime(big_prime)
 
 @static if small_field
-    xMPolyRing = zzModMPolyRing
-    xMPolyRingElem = zzModMPolyRingElem
+    const xMPolyRing = zzModMPolyRing
+    const xMPolyRingElem = zzModMPolyRingElem
 else
-    xMPolyRing = ZZMPolyRing
-    xMPolyRingElem = ZZMPolyRingElem
+    # NOTE: This will probably not work with how the code is currently written.
+    const xMPolyRing = ZZMPolyRing
+    const xMPolyRingElem = ZZMPolyRingElem
 end
 
 ###############################################################################
@@ -594,7 +591,7 @@ candidate_problems = filter(fixup_filter, candidate_problems)
 
 ###############################################################################
 ###############################################################################
-# computing minimality of candidate problems
+# computing minimality of candidate problems where p < 7
 ###############################################################################
 ###############################################################################
 
@@ -1016,12 +1013,6 @@ function is_minimal(pb::Problem; numevals::Int = 1000)
 end
 
 ###############################################################################
-# minimality check for 2 cameras
-###############################################################################   
-
-# TODO
-
-###############################################################################
 # generate all minimal problems
 ###############################################################################
 
@@ -1045,7 +1036,7 @@ end
 ###############################################################################
 
 # The following problems were generated via `minimal_problems(numevals = 1000)'
-# and printed using the following function:
+# and its result was printed below using the following function:
 #=
 function print_problem_array(pbs::Vector{Problem})
     str = "minimal_problems = [\n"
@@ -1065,48 +1056,48 @@ end
 =#
 
 minimal_problems = [
-    Problem(Class(3, 0, 0, 9, 0), Tuple{Int64, Int64}[], Int64[]),
-    Problem(Class(3, 1, 0, 4, 7), Tuple{Int64, Int64}[], [7]),
-    Problem(Class(3, 1, 0, 5, 5), Tuple{Int64, Int64}[], [5]),
-    Problem(Class(3, 1, 0, 6, 3), Tuple{Int64, Int64}[], [3]),
-    Problem(Class(3, 1, 0, 7, 1), Tuple{Int64, Int64}[], [1]),
-    Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [6, 6]),
-    Problem(Class(3, 2, 0, 1, 10), Tuple{Int64, Int64}[], [6, 4]),
-    Problem(Class(3, 2, 0, 1, 10), Tuple{Int64, Int64}[], [5, 5]),
-    Problem(Class(3, 2, 0, 2, 8), Tuple{Int64, Int64}[], [6, 2]),
-    Problem(Class(3, 2, 0, 2, 8), Tuple{Int64, Int64}[], [5, 3]),
-    Problem(Class(3, 2, 0, 2, 8), Tuple{Int64, Int64}[], [4, 4]),
-    Problem(Class(3, 2, 0, 3, 6), Tuple{Int64, Int64}[], [6, 0]),
-    Problem(Class(3, 2, 0, 3, 6), Tuple{Int64, Int64}[], [5, 1]),
-    Problem(Class(3, 2, 0, 3, 6), Tuple{Int64, Int64}[], [4, 2]),
-    Problem(Class(3, 2, 0, 3, 6), Tuple{Int64, Int64}[], [3, 3]),
-    Problem(Class(3, 2, 0, 4, 4), Tuple{Int64, Int64}[], [4, 0]),
-    Problem(Class(3, 2, 0, 4, 4), Tuple{Int64, Int64}[], [3, 1]),
-    Problem(Class(3, 2, 0, 4, 4), Tuple{Int64, Int64}[], [2, 2]),
-    Problem(Class(3, 2, 0, 5, 2), Tuple{Int64, Int64}[], [2, 0]),
-    Problem(Class(3, 2, 0, 5, 2), Tuple{Int64, Int64}[], [1, 1]),
-    Problem(Class(3, 2, 0, 6, 0), Tuple{Int64, Int64}[], [0, 0]),
-    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [5, 4, 0]),
-    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [5, 3, 1]),
-    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [5, 2, 2]),
-    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [4, 4, 1]),
-    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [4, 3, 2]),
-    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [3, 3, 3]),
-    Problem(Class(3, 3, 0, 1, 7), Tuple{Int64, Int64}[], [5, 2, 0]),
-    Problem(Class(3, 3, 0, 1, 7), Tuple{Int64, Int64}[], [4, 3, 0]),
-    Problem(Class(3, 3, 0, 1, 7), Tuple{Int64, Int64}[], [5, 1, 1]),
-    Problem(Class(3, 3, 0, 1, 7), Tuple{Int64, Int64}[], [4, 2, 1]),
-    Problem(Class(3, 3, 0, 1, 7), Tuple{Int64, Int64}[], [3, 3, 1]),
-    Problem(Class(3, 3, 0, 1, 7), Tuple{Int64, Int64}[], [3, 2, 2]),
-    Problem(Class(3, 3, 0, 2, 5), Tuple{Int64, Int64}[], [5, 0, 0]),
-    Problem(Class(3, 3, 0, 2, 5), Tuple{Int64, Int64}[], [4, 1, 0]),
-    Problem(Class(3, 3, 0, 2, 5), Tuple{Int64, Int64}[], [3, 2, 0]),
-    Problem(Class(3, 3, 0, 2, 5), Tuple{Int64, Int64}[], [3, 1, 1]),
-    Problem(Class(3, 3, 0, 2, 5), Tuple{Int64, Int64}[], [2, 2, 1]),
-    Problem(Class(3, 3, 0, 3, 3), Tuple{Int64, Int64}[], [3, 0, 0]),
-    Problem(Class(3, 3, 0, 3, 3), Tuple{Int64, Int64}[], [2, 1, 0]),
-    Problem(Class(3, 3, 0, 3, 3), Tuple{Int64, Int64}[], [1, 1, 1]),
-    Problem(Class(3, 3, 0, 4, 1), Tuple{Int64, Int64}[], [1, 0, 0]),
+    Problem(Class(3, 0, 0, 9, 0), Tuple{Int, Int}[], Int[]),
+    Problem(Class(3, 1, 0, 4, 7), Tuple{Int, Int}[], [7]),
+    Problem(Class(3, 1, 0, 5, 5), Tuple{Int, Int}[], [5]),
+    Problem(Class(3, 1, 0, 6, 3), Tuple{Int, Int}[], [3]),
+    Problem(Class(3, 1, 0, 7, 1), Tuple{Int, Int}[], [1]),
+    Problem(Class(3, 2, 0, 0, 12), Tuple{Int, Int}[], [6, 6]),
+    Problem(Class(3, 2, 0, 1, 10), Tuple{Int, Int}[], [6, 4]),
+    Problem(Class(3, 2, 0, 1, 10), Tuple{Int, Int}[], [5, 5]),
+    Problem(Class(3, 2, 0, 2, 8), Tuple{Int, Int}[], [6, 2]),
+    Problem(Class(3, 2, 0, 2, 8), Tuple{Int, Int}[], [5, 3]),
+    Problem(Class(3, 2, 0, 2, 8), Tuple{Int, Int}[], [4, 4]),
+    Problem(Class(3, 2, 0, 3, 6), Tuple{Int, Int}[], [6, 0]),
+    Problem(Class(3, 2, 0, 3, 6), Tuple{Int, Int}[], [5, 1]),
+    Problem(Class(3, 2, 0, 3, 6), Tuple{Int, Int}[], [4, 2]),
+    Problem(Class(3, 2, 0, 3, 6), Tuple{Int, Int}[], [3, 3]),
+    Problem(Class(3, 2, 0, 4, 4), Tuple{Int, Int}[], [4, 0]),
+    Problem(Class(3, 2, 0, 4, 4), Tuple{Int, Int}[], [3, 1]),
+    Problem(Class(3, 2, 0, 4, 4), Tuple{Int, Int}[], [2, 2]),
+    Problem(Class(3, 2, 0, 5, 2), Tuple{Int, Int}[], [2, 0]),
+    Problem(Class(3, 2, 0, 5, 2), Tuple{Int, Int}[], [1, 1]),
+    Problem(Class(3, 2, 0, 6, 0), Tuple{Int, Int}[], [0, 0]),
+    Problem(Class(3, 3, 0, 0, 9), Tuple{Int, Int}[], [5, 4, 0]),
+    Problem(Class(3, 3, 0, 0, 9), Tuple{Int, Int}[], [5, 3, 1]),
+    Problem(Class(3, 3, 0, 0, 9), Tuple{Int, Int}[], [5, 2, 2]),
+    Problem(Class(3, 3, 0, 0, 9), Tuple{Int, Int}[], [4, 4, 1]),
+    Problem(Class(3, 3, 0, 0, 9), Tuple{Int, Int}[], [4, 3, 2]),
+    Problem(Class(3, 3, 0, 0, 9), Tuple{Int, Int}[], [3, 3, 3]),
+    Problem(Class(3, 3, 0, 1, 7), Tuple{Int, Int}[], [5, 2, 0]),
+    Problem(Class(3, 3, 0, 1, 7), Tuple{Int, Int}[], [4, 3, 0]),
+    Problem(Class(3, 3, 0, 1, 7), Tuple{Int, Int}[], [5, 1, 1]),
+    Problem(Class(3, 3, 0, 1, 7), Tuple{Int, Int}[], [4, 2, 1]),
+    Problem(Class(3, 3, 0, 1, 7), Tuple{Int, Int}[], [3, 3, 1]),
+    Problem(Class(3, 3, 0, 1, 7), Tuple{Int, Int}[], [3, 2, 2]),
+    Problem(Class(3, 3, 0, 2, 5), Tuple{Int, Int}[], [5, 0, 0]),
+    Problem(Class(3, 3, 0, 2, 5), Tuple{Int, Int}[], [4, 1, 0]),
+    Problem(Class(3, 3, 0, 2, 5), Tuple{Int, Int}[], [3, 2, 0]),
+    Problem(Class(3, 3, 0, 2, 5), Tuple{Int, Int}[], [3, 1, 1]),
+    Problem(Class(3, 3, 0, 2, 5), Tuple{Int, Int}[], [2, 2, 1]),
+    Problem(Class(3, 3, 0, 3, 3), Tuple{Int, Int}[], [3, 0, 0]),
+    Problem(Class(3, 3, 0, 3, 3), Tuple{Int, Int}[], [2, 1, 0]),
+    Problem(Class(3, 3, 0, 3, 3), Tuple{Int, Int}[], [1, 1, 1]),
+    Problem(Class(3, 3, 0, 4, 1), Tuple{Int, Int}[], [1, 0, 0]),
     Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [6, 4, 0]),
     Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [5, 5, 0]),
     Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [6, 3, 1]),
@@ -1137,20 +1128,20 @@ minimal_problems = [
     Problem(Class(3, 2, 1, 4, 2), [(1, 2)], [2, 0, 0]),
     Problem(Class(3, 2, 1, 4, 2), [(1, 2)], [1, 1, 0]),
     Problem(Class(3, 2, 1, 5, 0), [(1, 2)], [0, 0, 0]),
-    Problem(Class(3, 4, 0, 0, 6), Tuple{Int64, Int64}[], [4, 2, 0, 0]),
-    Problem(Class(3, 4, 0, 0, 6), Tuple{Int64, Int64}[], [3, 3, 0, 0]),
-    Problem(Class(3, 4, 0, 0, 6), Tuple{Int64, Int64}[], [4, 1, 1, 0]),
-    Problem(Class(3, 4, 0, 0, 6), Tuple{Int64, Int64}[], [3, 2, 1, 0]),
-    Problem(Class(3, 4, 0, 0, 6), Tuple{Int64, Int64}[], [2, 2, 2, 0]),
-    Problem(Class(3, 4, 0, 0, 6), Tuple{Int64, Int64}[], [3, 1, 1, 1]),
-    Problem(Class(3, 4, 0, 0, 6), Tuple{Int64, Int64}[], [2, 2, 1, 1]),
-    Problem(Class(3, 4, 0, 1, 4), Tuple{Int64, Int64}[], [3, 1, 0, 0]),
-    Problem(Class(3, 4, 0, 1, 4), Tuple{Int64, Int64}[], [2, 2, 0, 0]),
-    Problem(Class(3, 4, 0, 1, 4), Tuple{Int64, Int64}[], [2, 1, 1, 0]),
-    Problem(Class(3, 4, 0, 1, 4), Tuple{Int64, Int64}[], [1, 1, 1, 1]),
-    Problem(Class(3, 4, 0, 2, 2), Tuple{Int64, Int64}[], [2, 0, 0, 0]),
-    Problem(Class(3, 4, 0, 2, 2), Tuple{Int64, Int64}[], [1, 1, 0, 0]),
-    Problem(Class(3, 4, 0, 3, 0), Tuple{Int64, Int64}[], [0, 0, 0, 0]),
+    Problem(Class(3, 4, 0, 0, 6), Tuple{Int, Int}[], [4, 2, 0, 0]),
+    Problem(Class(3, 4, 0, 0, 6), Tuple{Int, Int}[], [3, 3, 0, 0]),
+    Problem(Class(3, 4, 0, 0, 6), Tuple{Int, Int}[], [4, 1, 1, 0]),
+    Problem(Class(3, 4, 0, 0, 6), Tuple{Int, Int}[], [3, 2, 1, 0]),
+    Problem(Class(3, 4, 0, 0, 6), Tuple{Int, Int}[], [2, 2, 2, 0]),
+    Problem(Class(3, 4, 0, 0, 6), Tuple{Int, Int}[], [3, 1, 1, 1]),
+    Problem(Class(3, 4, 0, 0, 6), Tuple{Int, Int}[], [2, 2, 1, 1]),
+    Problem(Class(3, 4, 0, 1, 4), Tuple{Int, Int}[], [3, 1, 0, 0]),
+    Problem(Class(3, 4, 0, 1, 4), Tuple{Int, Int}[], [2, 2, 0, 0]),
+    Problem(Class(3, 4, 0, 1, 4), Tuple{Int, Int}[], [2, 1, 1, 0]),
+    Problem(Class(3, 4, 0, 1, 4), Tuple{Int, Int}[], [1, 1, 1, 1]),
+    Problem(Class(3, 4, 0, 2, 2), Tuple{Int, Int}[], [2, 0, 0, 0]),
+    Problem(Class(3, 4, 0, 2, 2), Tuple{Int, Int}[], [1, 1, 0, 0]),
+    Problem(Class(3, 4, 0, 3, 0), Tuple{Int, Int}[], [0, 0, 0, 0]),
     Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [4, 0, 3, 0]),
     Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [3, 1, 3, 0]),
     Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [2, 2, 3, 0]),
@@ -1192,10 +1183,10 @@ minimal_problems = [
     Problem(Class(3, 3, 1, 2, 3), [(1, 2)], [3, 0, 0, 0]),
     Problem(Class(3, 3, 1, 2, 3), [(1, 2)], [2, 1, 0, 0]),
     Problem(Class(3, 3, 1, 2, 3), [(1, 2)], [1, 1, 0, 1]),
-    Problem(Class(3, 5, 0, 0, 3), Tuple{Int64, Int64}[], [3, 0, 0, 0, 0]),
-    Problem(Class(3, 5, 0, 0, 3), Tuple{Int64, Int64}[], [2, 1, 0, 0, 0]),
-    Problem(Class(3, 5, 0, 0, 3), Tuple{Int64, Int64}[], [1, 1, 1, 0, 0]),
-    Problem(Class(3, 5, 0, 1, 1), Tuple{Int64, Int64}[], [1, 0, 0, 0, 0]),
+    Problem(Class(3, 5, 0, 0, 3), Tuple{Int, Int}[], [3, 0, 0, 0, 0]),
+    Problem(Class(3, 5, 0, 0, 3), Tuple{Int, Int}[], [2, 1, 0, 0, 0]),
+    Problem(Class(3, 5, 0, 0, 3), Tuple{Int, Int}[], [1, 1, 1, 0, 0]),
+    Problem(Class(3, 5, 0, 1, 1), Tuple{Int, Int}[], [1, 0, 0, 0, 0]),
     Problem(Class(3, 4, 1, 0, 4), [(1, 2)], [0, 0, 2, 2, 0]),
     Problem(Class(3, 4, 1, 0, 4), [(1, 2)], [1, 0, 2, 1, 0]),
     Problem(Class(3, 4, 1, 0, 4), [(1, 2)], [2, 0, 2, 0, 0]),
@@ -1235,7 +1226,7 @@ minimal_problems = [
     Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [3, 1, 1, 0, 0]),
     Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [3, 2, 0, 0, 0]),
     Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [3, 1, 0, 1, 0]),
-    Problem(Class(3, 6, 0, 0, 0), Tuple{Int64, Int64}[], [0, 0, 0, 0, 0, 0]),
+    Problem(Class(3, 6, 0, 0, 0), Tuple{Int, Int}[], [0, 0, 0, 0, 0, 0]),
     Problem(Class(3, 5, 1, 0, 1), [(1, 2)], [0, 0, 1, 0, 0, 0]),
     Problem(Class(3, 5, 1, 0, 1), [(1, 2)], [1, 0, 0, 0, 0, 0]),
     Problem(Class(3, 4, 2, 0, 2), [(1, 2), (1, 3)], [0, 1, 1, 0, 0, 0]),
@@ -1247,21 +1238,21 @@ minimal_problems = [
     Problem(Class(3, 4, 2, 0, 2), [(1, 2), (3, 4)], [2, 0, 0, 0, 0, 0]),
     Problem(Class(3, 4, 2, 0, 2), [(1, 2), (3, 4)], [1, 1, 0, 0, 0, 0]),
     Problem(Class(3, 4, 2, 1, 0), [(1, 2), (3, 4)], [0, 0, 0, 0, 0, 0]),
-    Problem(Class(4, 1, 0, 3, 6), Tuple{Int64, Int64}[], [6]),
-    Problem(Class(4, 1, 0, 4, 4), Tuple{Int64, Int64}[], [4]),
-    Problem(Class(4, 1, 0, 5, 2), Tuple{Int64, Int64}[], [2]),
-    Problem(Class(4, 1, 0, 6, 0), Tuple{Int64, Int64}[], [0]),
-    Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [4, 3, 0]),
-    Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [4, 2, 1]),
-    Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [3, 3, 1]),
-    Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [3, 2, 2]),
-    Problem(Class(4, 3, 0, 1, 5), Tuple{Int64, Int64}[], [3, 2, 0]),
-    Problem(Class(4, 3, 0, 1, 5), Tuple{Int64, Int64}[], [3, 1, 1]),
-    Problem(Class(4, 3, 0, 1, 5), Tuple{Int64, Int64}[], [2, 2, 1]),
-    Problem(Class(4, 3, 0, 2, 3), Tuple{Int64, Int64}[], [3, 0, 0]),
-    Problem(Class(4, 3, 0, 2, 3), Tuple{Int64, Int64}[], [2, 1, 0]),
-    Problem(Class(4, 3, 0, 2, 3), Tuple{Int64, Int64}[], [1, 1, 1]),
-    Problem(Class(4, 3, 0, 3, 1), Tuple{Int64, Int64}[], [1, 0, 0]),
+    Problem(Class(4, 1, 0, 3, 6), Tuple{Int, Int}[], [6]),
+    Problem(Class(4, 1, 0, 4, 4), Tuple{Int, Int}[], [4]),
+    Problem(Class(4, 1, 0, 5, 2), Tuple{Int, Int}[], [2]),
+    Problem(Class(4, 1, 0, 6, 0), Tuple{Int, Int}[], [0]),
+    Problem(Class(4, 3, 0, 0, 7), Tuple{Int, Int}[], [4, 3, 0]),
+    Problem(Class(4, 3, 0, 0, 7), Tuple{Int, Int}[], [4, 2, 1]),
+    Problem(Class(4, 3, 0, 0, 7), Tuple{Int, Int}[], [3, 3, 1]),
+    Problem(Class(4, 3, 0, 0, 7), Tuple{Int, Int}[], [3, 2, 2]),
+    Problem(Class(4, 3, 0, 1, 5), Tuple{Int, Int}[], [3, 2, 0]),
+    Problem(Class(4, 3, 0, 1, 5), Tuple{Int, Int}[], [3, 1, 1]),
+    Problem(Class(4, 3, 0, 1, 5), Tuple{Int, Int}[], [2, 2, 1]),
+    Problem(Class(4, 3, 0, 2, 3), Tuple{Int, Int}[], [3, 0, 0]),
+    Problem(Class(4, 3, 0, 2, 3), Tuple{Int, Int}[], [2, 1, 0]),
+    Problem(Class(4, 3, 0, 2, 3), Tuple{Int, Int}[], [1, 1, 1]),
+    Problem(Class(4, 3, 0, 3, 1), Tuple{Int, Int}[], [1, 0, 0]),
     Problem(Class(4, 2, 1, 0, 8), [(1, 2)], [5, 3, 0]),
     Problem(Class(4, 2, 1, 0, 8), [(1, 2)], [4, 4, 0]),
     Problem(Class(4, 2, 1, 0, 8), [(1, 2)], [5, 2, 1]),
@@ -1280,9 +1271,9 @@ minimal_problems = [
     Problem(Class(4, 2, 1, 3, 2), [(1, 2)], [2, 0, 0]),
     Problem(Class(4, 2, 1, 3, 2), [(1, 2)], [1, 1, 0]),
     Problem(Class(4, 2, 1, 4, 0), [(1, 2)], [0, 0, 0]),
-    Problem(Class(4, 5, 0, 0, 2), Tuple{Int64, Int64}[], [2, 0, 0, 0, 0]),
-    Problem(Class(4, 5, 0, 0, 2), Tuple{Int64, Int64}[], [1, 1, 0, 0, 0]),
-    Problem(Class(4, 5, 0, 1, 0), Tuple{Int64, Int64}[], [0, 0, 0, 0, 0]),
+    Problem(Class(4, 5, 0, 0, 2), Tuple{Int, Int}[], [2, 0, 0, 0, 0]),
+    Problem(Class(4, 5, 0, 0, 2), Tuple{Int, Int}[], [1, 1, 0, 0, 0]),
+    Problem(Class(4, 5, 0, 1, 0), Tuple{Int, Int}[], [0, 0, 0, 0, 0]),
     Problem(Class(4, 4, 1, 0, 3), [(1, 2)], [1, 0, 1, 1, 0]),
     Problem(Class(4, 4, 1, 0, 3), [(1, 2)], [2, 0, 1, 0, 0]),
     Problem(Class(4, 4, 1, 0, 3), [(1, 2)], [1, 1, 1, 0, 0]),
@@ -1301,14 +1292,14 @@ minimal_problems = [
     Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [2, 1, 1, 0, 0]),
     Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [2, 2, 0, 0, 0]),
     Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [2, 1, 0, 1, 0]),
-    Problem(Class(5, 1, 0, 3, 5), Tuple{Int64, Int64}[], [5]),
-    Problem(Class(5, 1, 0, 4, 3), Tuple{Int64, Int64}[], [3]),
-    Problem(Class(5, 1, 0, 5, 1), Tuple{Int64, Int64}[], [1]),
-    Problem(Class(5, 4, 0, 0, 4), Tuple{Int64, Int64}[], [2, 2, 0, 0]),
-    Problem(Class(5, 4, 0, 0, 4), Tuple{Int64, Int64}[], [2, 1, 1, 0]),
-    Problem(Class(5, 4, 0, 0, 4), Tuple{Int64, Int64}[], [1, 1, 1, 1]),
-    Problem(Class(5, 4, 0, 1, 2), Tuple{Int64, Int64}[], [1, 1, 0, 0]),
-    Problem(Class(5, 4, 0, 2, 0), Tuple{Int64, Int64}[], [0, 0, 0, 0]),
+    Problem(Class(5, 1, 0, 3, 5), Tuple{Int, Int}[], [5]),
+    Problem(Class(5, 1, 0, 4, 3), Tuple{Int, Int}[], [3]),
+    Problem(Class(5, 1, 0, 5, 1), Tuple{Int, Int}[], [1]),
+    Problem(Class(5, 4, 0, 0, 4), Tuple{Int, Int}[], [2, 2, 0, 0]),
+    Problem(Class(5, 4, 0, 0, 4), Tuple{Int, Int}[], [2, 1, 1, 0]),
+    Problem(Class(5, 4, 0, 0, 4), Tuple{Int, Int}[], [1, 1, 1, 1]),
+    Problem(Class(5, 4, 0, 1, 2), Tuple{Int, Int}[], [1, 1, 0, 0]),
+    Problem(Class(5, 4, 0, 2, 0), Tuple{Int, Int}[], [0, 0, 0, 0]),
     Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [3, 0, 2, 0]),
     Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [2, 1, 2, 0]),
     Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [1, 1, 2, 1]),
@@ -1322,13 +1313,13 @@ minimal_problems = [
     Problem(Class(5, 3, 1, 1, 3), [(1, 2)], [1, 1, 1, 0]),
     Problem(Class(5, 3, 1, 1, 3), [(1, 2)], [2, 1, 0, 0]),
     Problem(Class(5, 3, 1, 1, 3), [(1, 2)], [1, 1, 0, 1]),
-    Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [3, 3, 0]),
-    Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [3, 2, 1]),
-    Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [2, 2, 2]),
-    Problem(Class(6, 3, 0, 1, 4), Tuple{Int64, Int64}[], [2, 2, 0]),
-    Problem(Class(6, 3, 0, 1, 4), Tuple{Int64, Int64}[], [2, 1, 1]),
-    Problem(Class(6, 3, 0, 2, 2), Tuple{Int64, Int64}[], [2, 0, 0]),
-    Problem(Class(6, 3, 0, 2, 2), Tuple{Int64, Int64}[], [1, 1, 0]),
+    Problem(Class(6, 3, 0, 0, 6), Tuple{Int, Int}[], [3, 3, 0]),
+    Problem(Class(6, 3, 0, 0, 6), Tuple{Int, Int}[], [3, 2, 1]),
+    Problem(Class(6, 3, 0, 0, 6), Tuple{Int, Int}[], [2, 2, 2]),
+    Problem(Class(6, 3, 0, 1, 4), Tuple{Int, Int}[], [2, 2, 0]),
+    Problem(Class(6, 3, 0, 1, 4), Tuple{Int, Int}[], [2, 1, 1]),
+    Problem(Class(6, 3, 0, 2, 2), Tuple{Int, Int}[], [2, 0, 0]),
+    Problem(Class(6, 3, 0, 2, 2), Tuple{Int, Int}[], [1, 1, 0]),
     Problem(Class(6, 2, 1, 0, 7), [(1, 2)], [4, 3, 0]),
     Problem(Class(6, 2, 1, 0, 7), [(1, 2)], [4, 2, 1]),
     Problem(Class(6, 2, 1, 0, 7), [(1, 2)], [3, 3, 1]),
@@ -1339,22 +1330,22 @@ minimal_problems = [
     Problem(Class(6, 2, 1, 2, 3), [(1, 2)], [3, 0, 0]),
     Problem(Class(6, 2, 1, 2, 3), [(1, 2)], [2, 1, 0]),
     Problem(Class(6, 2, 1, 2, 3), [(1, 2)], [1, 1, 1]),
-    Problem(Class(7, 2, 0, 0, 8), Tuple{Int64, Int64}[], [4, 4]),
-    Problem(Class(7, 2, 0, 1, 6), Tuple{Int64, Int64}[], [3, 3]),
-    Problem(Class(7, 2, 0, 2, 4), Tuple{Int64, Int64}[], [3, 1]),
-    Problem(Class(7, 2, 0, 2, 4), Tuple{Int64, Int64}[], [2, 2]),
-    Problem(Class(7, 2, 0, 3, 2), Tuple{Int64, Int64}[], [2, 0]),
-    Problem(Class(7, 2, 0, 3, 2), Tuple{Int64, Int64}[], [1, 1]),
-    Problem(Class(7, 2, 0, 4, 0), Tuple{Int64, Int64}[], [0, 0]),
-    Problem(Class(8, 1, 0, 3, 4), Tuple{Int64, Int64}[], [4]),
-    Problem(Class(8, 1, 0, 4, 2), Tuple{Int64, Int64}[], [2]),
-    Problem(Class(8, 1, 0, 5, 0), Tuple{Int64, Int64}[], [0]),
-    Problem(Class(9, 0, 0, 6, 0), Tuple{Int64, Int64}[], Int64[])
+    Problem(Class(7, 2, 0, 0, 8), Tuple{Int, Int}[], [4, 4]),
+    Problem(Class(7, 2, 0, 1, 6), Tuple{Int, Int}[], [3, 3]),
+    Problem(Class(7, 2, 0, 2, 4), Tuple{Int, Int}[], [3, 1]),
+    Problem(Class(7, 2, 0, 2, 4), Tuple{Int, Int}[], [2, 2]),
+    Problem(Class(7, 2, 0, 3, 2), Tuple{Int, Int}[], [2, 0]),
+    Problem(Class(7, 2, 0, 3, 2), Tuple{Int, Int}[], [1, 1]),
+    Problem(Class(7, 2, 0, 4, 0), Tuple{Int, Int}[], [0, 0]),
+    Problem(Class(8, 1, 0, 3, 4), Tuple{Int, Int}[], [4]),
+    Problem(Class(8, 1, 0, 4, 2), Tuple{Int, Int}[], [2]),
+    Problem(Class(8, 1, 0, 5, 0), Tuple{Int, Int}[], [0]),
+    Problem(Class(9, 0, 0, 6, 0), Tuple{Int, Int}[], Int[])
    ]
 
 ###############################################################################
 ###############################################################################
-# degree computations
+# degree computations for p < 7
 ###############################################################################
 ###############################################################################
 
@@ -1372,7 +1363,7 @@ function evaluate(poly::MPolyRingElem{T}, vals::Vector{Variable}) where {T <: Ri
 
     res = Expression(0)
     for (cf, exp) in zip(coefficients(poly), exponent_vectors(poly))
-        term = Expression(Int(cf))
+        term = Expression(Int(cf.data))
         for ix in 1:length(vals)
             if !iszero(exp[ix])
                 term *= vals[ix]^exp[ix]
@@ -1446,12 +1437,16 @@ function degree(pb::Problem; verify_solution::Bool = false, ix::Int = -1)
     return num_solutions
 end
 
-function compute_all_degrees(; verify_solution::Bool = false, verbose::Bool = false)
-    degs = Vector{Int}(undef, length(minimal_problems))
+function degrees(
+        pbs::Vector{Problem} = minimal_problems;
+        verify_solution::Bool = false, # NOTE: Setting to true is *very* slow
+        verbose::Bool = false
+    )
+    degs = Vector{Int}(undef, length(pbs))
 
-    for (ix, pb) in enumerate(minimal_problems)
+    for (ix, pb) in enumerate(pbs)
         if verbose
-            print("Doing $ix/$(length(minimal_problems))...")
+            print("Doing $ix/$(length(pbs))...")
         end
         deg = degree(pb, verify_solution = verify_solution, ix = ix)
         degs[ix] = deg
@@ -1467,6 +1462,7 @@ end
 # degrees
 ###############################################################################
 
+# result of running `degrees'
 degs = [36, 6, 23, 23, 15, 4, 6, 16, 4, 12, 16, 2, 9, 15, 17, 9, 12, 13, 8, 9,
         7, 4, 4, 4, 10, 10, 12, 2, 7, 2, 7, 10, 11, 2, 5, 7, 8, 9, 6, 6, 6, 3,
         4, 4, 4, 4, 10, 10, 10, 10, 2, 7, 10, 2, 7, 10, 10, 11, 2, 5, 5, 5, 5,
@@ -1484,3 +1480,53 @@ degs = [36, 6, 23, 23, 15, 4, 6, 16, 4, 12, 16, 2, 9, 15, 17, 9, 12, 13, 8, 9,
 @assert length(degs) == length(minimal_problems)
 
 pb_degs = [(minimal_problems[ix], degs[ix]) for ix in 1:length(degs)]
+
+###############################################################################
+###############################################################################
+# minimal problems for p = 7
+###############################################################################
+###############################################################################
+
+###############################################################################
+# candidate problems
+###############################################################################
+
+# Take mlim = 10, just so we have at least one more view than 9.
+mlim = 10
+candidate_problems_7pts = Problem[]
+
+for m in 2:mlim
+    # Recall that problems containing four points on a line or six points on a
+    # plane are non-minimal.  Hence, the remaining problems are the following.
+    if m == 2
+        push!(candidate_problems_7pts, Problem(Class(m, 7, 0, 0, 0), Tuple{Int, Int}[], Int[]))
+        push!(candidate_problems_7pts, Problem(Class(m, 6, 1, 0, 0), [(1, 2)], Int[]))
+        push!(candidate_problems_7pts, Problem(Class(m, 5, 2, 0, 0), [(1, 2), (2, 3)], Int[])) # chain
+        push!(candidate_problems_7pts, Problem(Class(m, 5, 2, 0, 0), [(1, 2), (3, 4)], Int[])) # two groups
+    else
+        @assert !is_balanced(m, 7, 0, 0, 0)
+        @assert !is_balanced(m, 6, 1, 0, 0)
+        @assert !is_balanced(m, 5, 2, 0, 0)
+    end
+    push!(candidate_problems_7pts, Problem(Class(m, 4, 3, 0, 0), [(1, 2), (2, 3), (3, 4)], Int[])) # path/chain
+    push!(candidate_problems_7pts, Problem(Class(m, 4, 3, 0, 0), [(1, 2), (2, 3), (2, 4)], Int[])) # star
+end
+
+###############################################################################
+# minimal problems
+###############################################################################
+
+# Run this function to assert that the candidate problems are equal to the
+# numerical 
+function assert_candidate_problems_7pts_is_minimal()
+    @assert filter(x -> is_minimal(x), candidate_problems_7pts) == candidate_problems_7pts
+end
+
+minimal_problems_7pts = candidate_problems_7pts
+
+###############################################################################
+# degree computations
+###############################################################################
+
+# TODO
+degs_7pts = Int[]

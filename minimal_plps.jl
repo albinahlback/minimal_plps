@@ -1353,10 +1353,10 @@ minimal_problems = [
 
 # Generated via `filter(x -> !in(x, minimal_problems), candidate_problems)'
 nonminimal_candidate_problems = [
-    Problem(Class(3, 1, 0, 0, 15), Tuple{Int64, Int64}[], [15]),
-    Problem(Class(3, 1, 0, 1, 13), Tuple{Int64, Int64}[], [13]),
-    Problem(Class(3, 1, 0, 2, 11), Tuple{Int64, Int64}[], [11]),
-    Problem(Class(3, 1, 0, 3, 9), Tuple{Int64, Int64}[], [9]),
+    Problem(Class(3, 1, 0, 0, 15), Tuple{Int64, Int64}[], [15]),                 #Rule 1
+    Problem(Class(3, 1, 0, 1, 13), Tuple{Int64, Int64}[], [13]),                 #Rule 1
+    Problem(Class(3, 1, 0, 2, 11), Tuple{Int64, Int64}[], [11]),                 #Rule 1
+    Problem(Class(3, 1, 0, 3, 9), Tuple{Int64, Int64}[], [9]),                   #Rule 1
     Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [12, 0]),
     Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [11, 1]),
     Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [10, 2]),
@@ -1428,9 +1428,9 @@ nonminimal_candidate_problems = [
     Problem(Class(3, 4, 2, 0, 2), [(1, 2), (1, 3)], [0, 1, 0, 1, 0, 0]),
     Problem(Class(3, 4, 2, 0, 2), [(1, 2), (1, 3)], [1, 0, 0, 1, 0, 0]),
     Problem(Class(3, 4, 2, 1, 0), [(1, 2), (1, 3)], [0, 0, 0, 0, 0, 0]),
-    Problem(Class(4, 1, 0, 0, 12), Tuple{Int64, Int64}[], [12]),
-    Problem(Class(4, 1, 0, 1, 10), Tuple{Int64, Int64}[], [10]),
-    Problem(Class(4, 1, 0, 2, 8), Tuple{Int64, Int64}[], [8]),
+    Problem(Class(4, 1, 0, 0, 12), Tuple{Int64, Int64}[], [12]),                #Rule 1
+    Problem(Class(4, 1, 0, 1, 10), Tuple{Int64, Int64}[], [10]),                #Rule 1
+    Problem(Class(4, 1, 0, 2, 8), Tuple{Int64, Int64}[], [8]),                  #Rule 1
     Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [7, 0, 0]),
     Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [6, 1, 0]),
     Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [5, 2, 0]),
@@ -1459,9 +1459,9 @@ nonminimal_candidate_problems = [
     Problem(Class(4, 3, 2, 1, 2), [(1, 2), (1, 3)], [1, 1, 0, 0, 0]),
     Problem(Class(4, 3, 2, 1, 2), [(1, 2), (1, 3)], [2, 0, 0, 0, 0]),
     Problem(Class(4, 3, 2, 2, 0), [(1, 2), (1, 3)], [0, 0, 0, 0, 0]),
-    Problem(Class(5, 1, 0, 0, 11), Tuple{Int64, Int64}[], [11]),
-    Problem(Class(5, 1, 0, 1, 9), Tuple{Int64, Int64}[], [9]),
-    Problem(Class(5, 1, 0, 2, 7), Tuple{Int64, Int64}[], [7]),
+    Problem(Class(5, 1, 0, 0, 11), Tuple{Int64, Int64}[], [11]),                #Rule 1
+    Problem(Class(5, 1, 0, 1, 9), Tuple{Int64, Int64}[], [9]),                  #Rule 1
+    Problem(Class(5, 1, 0, 2, 7), Tuple{Int64, Int64}[], [7]),                  #Rule 1
     Problem(Class(5, 4, 0, 0, 4), Tuple{Int64, Int64}[], [4, 0, 0, 0]),
     Problem(Class(5, 4, 0, 0, 4), Tuple{Int64, Int64}[], [3, 1, 0, 0]),
     Problem(Class(5, 4, 0, 1, 2), Tuple{Int64, Int64}[], [2, 0, 0, 0]),
@@ -1499,9 +1499,9 @@ nonminimal_candidate_problems = [
     Problem(Class(7, 2, 0, 1, 6), Tuple{Int64, Int64}[], [5, 1]),
     Problem(Class(7, 2, 0, 1, 6), Tuple{Int64, Int64}[], [4, 2]),
     Problem(Class(7, 2, 0, 2, 4), Tuple{Int64, Int64}[], [4, 0]),
-    Problem(Class(8, 1, 0, 0, 10), Tuple{Int64, Int64}[], [10]),
-    Problem(Class(8, 1, 0, 1, 8), Tuple{Int64, Int64}[], [8]),
-    Problem(Class(8, 1, 0, 2, 6), Tuple{Int64, Int64}[], [6])
+    Problem(Class(8, 1, 0, 0, 10), Tuple{Int64, Int64}[], [10]),                #Rule 1
+    Problem(Class(8, 1, 0, 1, 8), Tuple{Int64, Int64}[], [8]),                  #Rule 1
+    Problem(Class(8, 1, 0, 2, 6), Tuple{Int64, Int64}[], [6])                   #Rule 1
    ]
 
 ###############################################################################

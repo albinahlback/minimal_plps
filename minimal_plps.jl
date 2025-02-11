@@ -24,7 +24,7 @@ import AbstractAlgebra.Generic:
     MatSpace, MatSpaceElem
 import AbstractAlgebra:
     matrix_space, polynomial_ring, fraction_field, residue_ring,
-    base_ring,
+    elem_type, base_ring,
     one, zero,
     is_one, is_zero,
     derivative,
@@ -35,9 +35,8 @@ import AbstractAlgebra:
 import Oscar:
     Partition,
     ZZ,
-    zzModMPolyRing, zzModMPolyRingElem,
-    ZZMPolyRing, ZZMPolyRingElem,
-    MPolyRingElem, RingElement
+    MPolyRingElem, RingElem,
+    Ring
 import Oscar:
     partitions, evaluate, det, denominator, numerator, is_prime
 import HomotopyContinuation: @var, System, solve, solutions, monodromy_solve,
@@ -184,23 +183,6 @@ feasible_balanced_classes = filter(
 # In this part we only care about problems with less than seven points.
 interesting_balanced_classes = filter(
     x -> (_pf(x) + _pd(x) < 7), feasible_balanced_classes)
-
-###############################################################################
-# computing classes of point-line balanced problems
-###############################################################################
-
-small_field = true
-big_prime = UInt(281474976710677)
-@assert is_prime(big_prime)
-
-@static if small_field
-    const xMPolyRing = zzModMPolyRing
-    const xMPolyRingElem = zzModMPolyRingElem
-else
-    # NOTE: This will probably not work with how the code is currently written.
-    const xMPolyRing = ZZMPolyRing
-    const xMPolyRingElem = ZZMPolyRingElem
-end
 
 ###############################################################################
 # problem types typedef
@@ -608,9 +590,8 @@ num_vars_las(cl::Class) = 2 * _la(cl)
 num_vars(cl::Class) = num_vars_cms(cl) + num_vars_pfs(cl) + num_vars_pds(cl) +
                         num_vars_lfs(cl) + num_vars_las(cl)
 
-function polynomial_ring(cl::Class)
+function polynomial_ring(cl::Class, R::S) where {S <: Ring}
     syms = Symbol[]
-    basering = (small_field) ? residue_ring(ZZ, big_prime)[1] : ZZ
 
     for ix in 1:num_vars_cms(cl)
         push!(syms, Symbol("c$ix"))
@@ -628,41 +609,41 @@ function polynomial_ring(cl::Class)
         push!(syms, Symbol("a$ix"))
     end
 
-    return polynomial_ring(basering, syms)
+    return polynomial_ring(R, syms)
 end
 
 # C_{m} × X_{p, l, I}
-struct CXElem
+struct CXElem{S <: RingElem, T <: MPolyRingElem{S}}
     pb::Problem
-    R::xMPolyRing
-    cms::Vector{MatSpaceElem{xMPolyRingElem}}
-    pfs::Vector{MatSpaceElem{xMPolyRingElem}}
-    pds::Vector{MatSpaceElem{xMPolyRingElem}}
-    lfs::Vector{MatSpaceElem{xMPolyRingElem}}
-    las::Vector{MatSpaceElem{xMPolyRingElem}}
+    cms::Vector{MatSpaceElem{T}}
+    pfs::Vector{MatSpaceElem{T}}
+    pds::Vector{MatSpaceElem{T}}
+    lfs::Vector{MatSpaceElem{T}}
+    las::Vector{MatSpaceElem{T}}
 
-    function CXElem(pb::Problem)
+    # Here R is a base ring, such as integers or finite field
+    function CXElem(pb::Problem, R::V) where {V <: Ring}
         m, pf, pd, lf, la = _m(pb), _pf(pb), _pd(pb), _lf(pb), _la(pb)
         deps = pb.deps
         adjs = pb.adjs
 
-        R, gens = polynomial_ring(pb.cl)
-        z0, o1 = zero(R), one(R)
-        C = matrix_space(R, 3, 4) # camera space
-        P = matrix_space(R, 4, 1) # point space
-        L = matrix_space(R, 4, 2) # line space
-        cms = MatSpaceElem{xMPolyRingElem}[]
-        pfs = MatSpaceElem{xMPolyRingElem}[]
-        pds = MatSpaceElem{xMPolyRingElem}[]
-        lfs = MatSpaceElem{xMPolyRingElem}[]
-        las = MatSpaceElem{xMPolyRingElem}[]
+        U, gens = polynomial_ring(pb.cl, R)
+        z0, o1 = zero(U), one(U)
+        C = matrix_space(U, 3, 4) # camera space
+        P = matrix_space(U, 4, 1) # point space
+        L = matrix_space(U, 4, 2) # line space
+        cms = Vector{MatSpaceElem{elem_type(U)}}(undef, m)
+        pfs = Vector{MatSpaceElem{elem_type(U)}}(undef, pf)
+        pds = Vector{MatSpaceElem{elem_type(U)}}(undef, pd)
+        lfs = Vector{MatSpaceElem{elem_type(U)}}(undef, lf)
+        las = Vector{MatSpaceElem{elem_type(U)}}(undef, la)
 
         # First camera on the form (1 0 0 0; 0 1 0 0; 0 0 1 0)
         c1 = zero(C)
         for ix in 1:3
             c1[ix, ix] = o1
         end
-        push!(cms, c1)
+        cms[1] = c1
 
         # Second camera on the form (0 0 0 1; 1 * * *; * * * *)
         c2 = zero(C)
@@ -670,7 +651,7 @@ struct CXElem
         c2[2, 1] = o1
         c2[2, 2:4] = gens[1:3]
         c2[3, 1:4] = gens[4:7]
-        push!(cms, c2)
+        cms[2] = c2
 
         new_gens = gens[8:end]
 
@@ -681,7 +662,7 @@ struct CXElem
             cx[1, 2:4] = new_gens[(1 + 11 * ix):(3 + 11 * ix)]
             cx[2, 1:4] = new_gens[(4 + 11 * ix):(7 + 11 * ix)]
             cx[3, 1:4] = new_gens[(8 + 11 * ix):(11 + 11 * ix)]
-            push!(cms, cx)
+            cms[ix + 3] = cx
         end
 
         new_gens = new_gens[(1 + 11 * (m - 2)):end]
@@ -691,7 +672,7 @@ struct CXElem
             px = zero(P)
             px[1:3, 1] = new_gens[(1 + 3 * ix):(3 + 3 * ix)]
             px[4, 1] = o1
-            push!(pfs, px)
+            pfs[ix + 1] = px
         end
 
         new_gens = new_gens[(1 + 3 * pf):end]
@@ -701,7 +682,7 @@ struct CXElem
         for ix in 1:pd
             t = new_gens[ix]
             px = t * pfs[deps[ix][1]] + (o1 - t) * pfs[deps[ix][2]]
-            push!(pds, px)
+            pds[ix] = px
         end
 
         new_gens = new_gens[(1 + pd):end]
@@ -713,7 +694,7 @@ struct CXElem
             lx[2, 1:2] = new_gens[(3 + 4 * ix):(4 + 4 * ix)]
             lx[3, 1] = o1
             lx[4, 2] = o1
-            push!(lfs, lx)
+            lfs[ix + 1] = lx
         end
 
         new_gens = new_gens[(1 + 4 * lf):end]
@@ -738,11 +719,11 @@ struct CXElem
             else
                 lx[1:4, 2] = pds[jx - pf][1:4, 1]
             end
-            push!(las, lx)
+            las[ix + 1] = lx
         end
         @assert is_zero(new_adjs)
 
-        return new(pb, R, cms, pfs, pds, lfs, las)
+        return new{elem_type(R), elem_type(U)}(pb, cms, pfs, pds, lfs, las)
     end
 end
 
@@ -753,46 +734,47 @@ end
 # Naïve representation of Y_{p, l, I, m}
 #
 # Stored in camera-major form.
-struct NaiveImageVarietyElem
+struct NaiveImageVarietyElem{S <: RingElem, T <: MPolyRingElem{S}}
     pb::Problem
-    R::xMPolyRing
-    pfs::Vector{MatSpaceElem{xMPolyRingElem}}
-    pds::Vector{MatSpaceElem{xMPolyRingElem}}
-    lfs::Vector{MatSpaceElem{xMPolyRingElem}}
-    las::Vector{MatSpaceElem{xMPolyRingElem}}
+    pfs::Vector{MatSpaceElem{T}}
+    pds::Vector{MatSpaceElem{T}}
+    lfs::Vector{MatSpaceElem{T}}
+    las::Vector{MatSpaceElem{T}}
 
     function NaiveImageVarietyElem(cx::CXElem)
         pb = cx.pb
         m, pf, pd, lf, la = _m(pb), _pf(pb), _pd(pb), _lf(pb), _la(pb)
-        R = cx.R
-        pfs = MatSpaceElem{xMPolyRingElem}[]
-        pds = MatSpaceElem{xMPolyRingElem}[]
-        lfs = MatSpaceElem{xMPolyRingElem}[]
-        las = MatSpaceElem{xMPolyRingElem}[]
+        U = parent(cx.cms[1][1, 1])
+        R = base_ring(U)
+
+        pfs = Vector{MatSpaceElem{elem_type(U)}}(undef, m * pf)
+        pds = Vector{MatSpaceElem{elem_type(U)}}(undef, m * pd)
+        lfs = Vector{MatSpaceElem{elem_type(U)}}(undef, m * lf)
+        las = Vector{MatSpaceElem{elem_type(U)}}(undef, m * la)
 
         for ix in 1:m
             # free points
             for jx in 1:pf
-                push!(pfs, cx.cms[ix] * cx.pfs[jx])
+                pfs[jx + pf * (ix - 1)] = cx.cms[ix] * cx.pfs[jx]
             end
 
             # dep. points
             for jx in 1:pd
-                push!(pds, cx.cms[ix] * cx.pds[jx])
+                pds[jx + pd * (ix - 1)] = cx.cms[ix] * cx.pds[jx]
             end
 
             # free lines
             for jx in 1:lf
-                push!(lfs, cx.cms[ix] * cx.lfs[jx])
+                lfs[jx + lf * (ix - 1)] = cx.cms[ix] * cx.lfs[jx]
             end
 
             # adj. lines
             for jx in 1:la
-                push!(las, cx.cms[ix] * cx.las[jx])
+                las[jx + la * (ix - 1)] = cx.cms[ix] * cx.las[jx]
             end
         end
 
-        return new(pb, R, pfs, pds, lfs, las)
+        return new{elem_type(R), elem_type(U)}(pb, pfs, pds, lfs, las)
     end
 end
 
@@ -809,18 +791,23 @@ _la(niv::NaiveImageVarietyElem) = _la(niv.pb)
 # Herein, we take the naïve representation, normalize it, and push the
 # non-constant entries into a long vector `entries`.
 
-struct ImageVarietyElem
+struct ImageVarietyElem{S <: RingElem, T <: MPolyRingElem{S}, V <: FracFieldElem{T}}
     pb::Problem
-    R::xMPolyRing
-    K::FracField{xMPolyRingElem}
-    entries::Vector{FracFieldElem{xMPolyRingElem}}
+    entries::Vector{V}
 
     function ImageVarietyElem(niv::NaiveImageVarietyElem)
         pb = niv.pb
         m, pf, pd, lf, la = _m(pb), _pf(pb), _pd(pb), _lf(pb), _la(pb)
         deps = pb.deps
-        R = niv.R
-        K = fraction_field(R)
+
+        if pf != 0
+            U = parent(niv.pfs[1][1, 1])
+        else
+            U = parent(niv.lfs[1][1, 1])
+        end
+        R = base_ring(U)
+        K = fraction_field(U)
+
         entries = zeros(K, m * dim_image_space(pf, pd, lf, la))
         new_entries = view(entries, 1:length(entries))
         pfs = view(niv.pfs, 1:length(niv.pfs))
@@ -914,12 +901,12 @@ struct ImageVarietyElem
             new_entries = view(new_entries, (la + 1):length(new_entries))
         end
 
-        return new(pb, R, K, entries)
+        return new{elem_type(R), elem_type(U), elem_type(K)}(pb, entries)
     end
 
-    function ImageVarietyElem(pb::Problem)
+    function ImageVarietyElem(pb::Problem, R::V) where {V <: Ring}
         # Get the symbolic representation C_{m} × X_{p, l, I} of problem
-        cx = CXElem(pb)
+        cx = CXElem(pb, R)
 
         # Map naïvely to images
         niv = NaiveImageVarietyElem(cx)
@@ -929,7 +916,8 @@ struct ImageVarietyElem
 end
 
 class(iv::ImageVarietyElem) = iv.pb.cl
-field(iv::ImageVarietyElem) = iv.K
+field(iv::ImageVarietyElem) = parent(iv.entries[1])
+number_of_variables(iv::ImageVarietyElem) = number_of_variables(base_ring(field(iv)))
 
 ###############################################################################
 # jacobian
@@ -954,10 +942,12 @@ function jacobian(iv::ImageVarietyElem)
     return jac
 end
 
-jacobian(pb::Problem) = jacobian(ImageVarietyElem(pb))
+function jacobian(pb::Problem, R::V) where {V <: Ring}
+    jacobian(ImageVarietyElem(pb, R))
+end
 
 # NOTE: This will destroy input
-function similar_matrix(mat::MatSpaceElem{FracFieldElem{xMPolyRingElem}})
+function similar_matrix(mat::MatSpaceElem{V}) where {S <: RingElem, T <: MPolyRingElem{S}, V <: FracFieldElem{T}}
     n = ncols(mat)
     K = base_ring(mat)
     R = base_ring(K)
@@ -983,12 +973,22 @@ function similar_matrix(mat::MatSpaceElem{FracFieldElem{xMPolyRingElem}})
 end
 
 ###############################################################################
+# computing classes of point-line balanced problems
+###############################################################################
+
+# Some big prime that still allows arithmetic in double precision without
+# losing too much precision.
+big_prime = UInt64(281474976710677)
+@assert is_prime(big_prime)
+modring = residue_ring(ZZ, big_prime)[1]
+
+###############################################################################
 # numerical minimality check
 ###############################################################################
 
 function is_minimal(pb::Problem; numevals::Int = 1000)
     # Get symbolical jacobian
-    jac = jacobian(pb)
+    jac = jacobian(pb, modring)
     simjac = similar_matrix(jac)
 
     n = ncols(simjac)
@@ -1358,12 +1358,12 @@ minimal_problems = [
 
 # HomotopyContinuation.jl does not provide a way to convert from Oscar
 # polynomials to their polynomials.  Hence, we write our own.
-function evaluate(poly::MPolyRingElem{T}, vals::Vector{Variable}) where {T <: RingElement}
+function evaluate(poly::MPolyRingElem{T}, vals::Vector{Variable}) where {T <: RingElem}
     @assert length(vals) == number_of_variables(parent(poly))
 
     res = Expression(0)
     for (cf, exp) in zip(coefficients(poly), exponent_vectors(poly))
-        term = Expression(Int(cf.data))
+        term = Expression(Int(cf))
         for ix in 1:length(vals)
             if !iszero(exp[ix])
                 term *= vals[ix]^exp[ix]
@@ -1387,13 +1387,12 @@ function system_of_polynomials(
         n::Int
     )
     entries = iv.entries
-    R = iv.R
 
     n = length(entries)
     res = zeros(Expression, n)
 
     @assert length(entries) == n
-    @assert number_of_variables(R) == n
+    @assert number_of_variables(iv) == n
 
     for ix in 1:n
         f = denominator(entries[ix])
@@ -1408,7 +1407,7 @@ end
 
 # Assumes that pb is a minimal problem
 function degree(pb::Problem; verify_solution::Bool = false, ix::Int = -1)
-    iv = ImageVarietyElem(pb)
+    iv = ImageVarietyElem(pb, ZZ)
     n = length(iv.entries)
     vars = (@var x[1:2*n])[1]
     system = system_of_polynomials(iv, vars, n)
@@ -1478,7 +1477,6 @@ degs = [36, 6, 23, 23, 15, 4, 6, 16, 4, 12, 16, 2, 9, 15, 17, 9, 12, 13, 8, 9,
         1, 1, 3, 10, 9, 20, 6, 9, 3, 10, 38, 8, 114]
 
 @assert length(degs) == length(minimal_problems)
-
 pb_degs = [(minimal_problems[ix], degs[ix]) for ix in 1:length(degs)]
 
 ###############################################################################
@@ -1516,8 +1514,7 @@ end
 # minimal problems
 ###############################################################################
 
-# Run this function to assert that the candidate problems are equal to the
-# numerical 
+# Run this function to assert that all these candidate problems are minimal.
 function assert_candidate_problems_7pts_is_minimal()
     @assert filter(x -> is_minimal(x), candidate_problems_7pts) == candidate_problems_7pts
 end
@@ -1525,8 +1522,52 @@ end
 minimal_problems_7pts = candidate_problems_7pts
 
 ###############################################################################
-# degree computations
+# degrees
 ###############################################################################
 
-# TODO
-degs_7pts = Int[]
+degs_7pts = [3, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+
+@assert length(degs_7pts) == length(minimal_problems_7pts)
+pb_degs_7pts = [(minimal_problems_7pts[ix], degs_7pts[ix]) for ix in 1:length(degs_7pts)]
+
+# Run this function to assert that the degrees here are correct (according to
+# theory presented in paper).
+function assert_degs_7pts_is_correct()
+    @assert degrees(minimal_problems_7pts) == degs_7pts
+
+    # Minimal problem with pf = 7
+    pb_degs_pf7 = filter(x -> _pf(x[1]) == 7, pb_degs_7pts)
+
+    # Assert that this problem has degree 3
+    @assert length(pb_degs_pf7) == 1
+    @assert all(x -> x[2] == 3, pb_degs_pf7)
+
+    # Minimal problem with pf = 6
+    pb_degs_pf6 = filter(x -> _pf(x[1]) == 6, pb_degs_7pts)
+    # Assert that this problem has degree 2
+    @assert length(pb_degs_pf6) == 1
+    @assert all(x -> x[2] == 2, pb_degs_pf6)
+
+    # Minimal problem with pf = 5 and one group of dependent points
+    pb_degs_pf5_1 = filter(x -> _pf(x[1]) == 5 && x[1].deps == [(1, 2), (2, 3)], pb_degs_7pts)
+    # Assert that this problem has degree 1
+    @assert length(pb_degs_pf5_1) == 1
+    @assert all(x -> x[2] == 1, pb_degs_pf5_1)
+
+    # Minimal problem with pf = 5 and two groups of dependent points
+    pb_degs_pf5_2 = filter(x -> _pf(x[1]) == 5 && x[1].deps == [(1, 2), (3, 4)], pb_degs_7pts)
+    # Assert that this problem has degree 2
+    @assert length(pb_degs_pf5_2) == 1
+    @assert all(x -> x[2] == 2, pb_degs_pf5_2)
+
+    # Minimal problems with pf = 4
+    pb_degs_pf4 = filter(x -> _pf(x[1]) == 4, pb_degs_7pts)
+    # Assert that these problems complete all problems, and that all of them
+    # have degree 1
+    @assert length(pb_degs_pf4) == (length(minimal_problems_7pts)
+                                    - length(pb_degs_pf7)
+                                    - length(pb_degs_pf6)
+                                    - length(pb_degs_pf5_1)
+                                    - length(pb_degs_pf5_2))
+    @assert all(x -> x[2] == 1, pb_degs_pf4)
+end

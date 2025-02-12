@@ -1353,155 +1353,155 @@ minimal_problems = [
 
 # Generated via `filter(x -> !in(x, minimal_problems), candidate_problems)'
 nonminimal_candidate_problems = [
-    Problem(Class(3, 1, 0, 0, 15), Tuple{Int64, Int64}[], [15]),                 #Rule 1
-    Problem(Class(3, 1, 0, 1, 13), Tuple{Int64, Int64}[], [13]),                 #Rule 1
-    Problem(Class(3, 1, 0, 2, 11), Tuple{Int64, Int64}[], [11]),                 #Rule 1
-    Problem(Class(3, 1, 0, 3, 9), Tuple{Int64, Int64}[], [9]),                   #Rule 1
-    Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [12, 0]),
-    Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [11, 1]),
-    Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [10, 2]),
-    Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [9, 3]),
-    Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [8, 4]),
-    Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [7, 5]),
-    Problem(Class(3, 2, 0, 1, 10), Tuple{Int64, Int64}[], [10, 0]),
-    Problem(Class(3, 2, 0, 1, 10), Tuple{Int64, Int64}[], [9, 1]),
-    Problem(Class(3, 2, 0, 1, 10), Tuple{Int64, Int64}[], [8, 2]),
-    Problem(Class(3, 2, 0, 1, 10), Tuple{Int64, Int64}[], [7, 3]),
-    Problem(Class(3, 2, 0, 2, 8), Tuple{Int64, Int64}[], [8, 0]),
-    Problem(Class(3, 2, 0, 2, 8), Tuple{Int64, Int64}[], [7, 1]),
-    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [9, 0, 0]),
-    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [8, 1, 0]),
-    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [7, 2, 0]),
-    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [6, 3, 0]),
-    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [7, 1, 1]),
-    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [6, 2, 1]),
-    Problem(Class(3, 3, 0, 1, 7), Tuple{Int64, Int64}[], [7, 0, 0]),
-    Problem(Class(3, 3, 0, 1, 7), Tuple{Int64, Int64}[], [6, 1, 0]),
-    Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [10, 0, 0]),
-    Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [9, 1, 0]),
-    Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [8, 2, 0]),
-    Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [7, 3, 0]),
-    Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [8, 1, 1]),
-    Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [7, 2, 1]),
-    Problem(Class(3, 2, 1, 1, 8), [(1, 2)], [8, 0, 0]),
-    Problem(Class(3, 2, 1, 1, 8), [(1, 2)], [7, 1, 0]),
-    Problem(Class(3, 4, 0, 0, 6), Tuple{Int64, Int64}[], [6, 0, 0, 0]),
-    Problem(Class(3, 4, 0, 0, 6), Tuple{Int64, Int64}[], [5, 1, 0, 0]),
+    Problem(Class(3, 1, 0, 0, 15), Tuple{Int64, Int64}[], [15]),                 #Criterion 1
+    Problem(Class(3, 1, 0, 1, 13), Tuple{Int64, Int64}[], [13]),                 #Criterion 1
+    Problem(Class(3, 1, 0, 2, 11), Tuple{Int64, Int64}[], [11]),                 #Criterion 1
+    Problem(Class(3, 1, 0, 3, 9), Tuple{Int64, Int64}[], [9]),                   #Criterion 1
+    Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [12, 0]),              #Criterion 2
+    Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [11, 1]),              #Criterion 2
+    Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [10, 2]),              #Criterion 2
+    Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [9, 3]),               #Criterion 2
+    Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [8, 4]),               #Criterion 2
+    Problem(Class(3, 2, 0, 0, 12), Tuple{Int64, Int64}[], [7, 5]),               #Criterion 2
+    Problem(Class(3, 2, 0, 1, 10), Tuple{Int64, Int64}[], [10, 0]),              #Criterion 2
+    Problem(Class(3, 2, 0, 1, 10), Tuple{Int64, Int64}[], [9, 1]),               #Criterion 2
+    Problem(Class(3, 2, 0, 1, 10), Tuple{Int64, Int64}[], [8, 2]),               #Criterion 2
+    Problem(Class(3, 2, 0, 1, 10), Tuple{Int64, Int64}[], [7, 3]),               #Criterion 2
+    Problem(Class(3, 2, 0, 2, 8), Tuple{Int64, Int64}[], [8, 0]),                #Criterion 2
+    Problem(Class(3, 2, 0, 2, 8), Tuple{Int64, Int64}[], [7, 1]),                #Criterion 2
+    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [9, 0, 0]),             #Criterion 3
+    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [8, 1, 0]),             #Criterion 3
+    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [7, 2, 0]),             #Criterion 3
+    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [6, 3, 0]),             #Criterion 3
+    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [7, 1, 1]),             #Criterion 3
+    Problem(Class(3, 3, 0, 0, 9), Tuple{Int64, Int64}[], [6, 2, 1]),             #Criterion 3
+    Problem(Class(3, 3, 0, 1, 7), Tuple{Int64, Int64}[], [7, 0, 0]),             #Criterion 3
+    Problem(Class(3, 3, 0, 1, 7), Tuple{Int64, Int64}[], [6, 1, 0]),             #Criterion 3
+    Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [10, 0, 0]),                        #Criterion 2
+    Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [9, 1, 0]),                         #Criterion 2
+    Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [8, 2, 0]),                         #Criterion 2
+    Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [7, 3, 0]),                         #Criterion 2
+    Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [8, 1, 1]),                         #Criterion 2
+    Problem(Class(3, 2, 1, 0, 10), [(1, 2)], [7, 2, 1]),                         #Criterion 2
+    Problem(Class(3, 2, 1, 1, 8), [(1, 2)], [8, 0, 0]),                          #Criterion 2
+    Problem(Class(3, 2, 1, 1, 8), [(1, 2)], [7, 1, 0]),                          #Criterion 2
+    Problem(Class(3, 4, 0, 0, 6), Tuple{Int64, Int64}[], [6, 0, 0, 0]),          #Criterion 4
+    Problem(Class(3, 4, 0, 0, 6), Tuple{Int64, Int64}[], [5, 1, 0, 0]),          #Criterion 4
     Problem(Class(3, 4, 0, 1, 4), Tuple{Int64, Int64}[], [4, 0, 0, 0]),
-    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [0, 0, 7, 0]),
-    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [1, 0, 6, 0]),
-    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [2, 0, 5, 0]),
-    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [1, 1, 5, 0]),
-    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [3, 0, 4, 0]),
-    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [2, 1, 4, 0]),
-    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [1, 1, 4, 1]),
-    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [6, 0, 1, 0]),
-    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [7, 0, 0, 0]),
-    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [6, 1, 0, 0]),
-    Problem(Class(3, 3, 1, 1, 5), [(1, 2)], [0, 0, 5, 0]),
-    Problem(Class(3, 3, 1, 1, 5), [(1, 2)], [1, 0, 4, 0]),
+    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [0, 0, 7, 0]),                       #Criterion 5
+    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [1, 0, 6, 0]),                       #Criterion 5
+    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [2, 0, 5, 0]),                       #Criterion 5
+    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [1, 1, 5, 0]),                       #Criterion 5
+    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [3, 0, 4, 0]),                       #Criterion 5
+    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [2, 1, 4, 0]),                       #Criterion 5
+    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [1, 1, 4, 1]),                       #Criterion 5
+    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [6, 0, 1, 0]),                       #Criterion 3
+    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [7, 0, 0, 0]),                       #Criterion 3
+    Problem(Class(3, 3, 1, 0, 7), [(1, 2)], [6, 1, 0, 0]),                       #Criterion 3
+    Problem(Class(3, 3, 1, 1, 5), [(1, 2)], [0, 0, 5, 0]),                       #Criterion 5
+    Problem(Class(3, 3, 1, 1, 5), [(1, 2)], [1, 0, 4, 0]),                       #Criterion 5
     Problem(Class(3, 3, 1, 1, 5), [(1, 2)], [5, 0, 0, 0]),
     Problem(Class(3, 3, 1, 3, 1), [(1, 2)], [0, 0, 1, 0]),
     Problem(Class(3, 3, 1, 3, 1), [(1, 2)], [1, 0, 0, 0]),
-    Problem(Class(3, 4, 1, 0, 4), [(1, 2)], [0, 0, 4, 0, 0]),
-    Problem(Class(3, 4, 1, 0, 4), [(1, 2)], [0, 0, 3, 1, 0]),
-    Problem(Class(3, 4, 1, 0, 4), [(1, 2)], [1, 0, 3, 0, 0]),
+    Problem(Class(3, 4, 1, 0, 4), [(1, 2)], [0, 0, 4, 0, 0]),                    #Criterion 6
+    Problem(Class(3, 4, 1, 0, 4), [(1, 2)], [0, 0, 3, 1, 0]),                    #Criterion 6
+    Problem(Class(3, 4, 1, 0, 4), [(1, 2)], [1, 0, 3, 0, 0]),                    #Criterion 6
     Problem(Class(3, 4, 1, 1, 2), [(1, 2)], [0, 0, 2, 0, 0]),
-    Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [0, 4, 1, 0, 0]),
-    Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [0, 5, 0, 0, 0]),
-    Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [0, 4, 0, 1, 0]),
-    Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [1, 4, 0, 0, 0]),
-    Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [4, 1, 0, 0, 0]),
-    Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [5, 0, 0, 0, 0]),
-    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [0, 2, 1, 0, 0]),
-    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [0, 1, 1, 1, 0]),
-    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [0, 3, 0, 0, 0]),
-    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [0, 2, 0, 1, 0]),
-    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [1, 1, 1, 0, 0]),
-    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [1, 2, 0, 0, 0]),
-    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [1, 1, 0, 1, 0]),
-    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [2, 1, 0, 0, 0]),
-    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [3, 0, 0, 0, 0]),
-    Problem(Class(3, 3, 2, 2, 1), [(1, 2), (1, 3)], [0, 1, 0, 0, 0]),
-    Problem(Class(3, 3, 2, 2, 1), [(1, 2), (1, 3)], [1, 0, 0, 0, 0]),
-    Problem(Class(3, 4, 2, 0, 2), [(1, 2), (1, 3)], [0, 0, 0, 2, 0, 0]),
-    Problem(Class(3, 4, 2, 0, 2), [(1, 2), (1, 3)], [0, 1, 0, 1, 0, 0]),
-    Problem(Class(3, 4, 2, 0, 2), [(1, 2), (1, 3)], [1, 0, 0, 1, 0, 0]),
-    Problem(Class(3, 4, 2, 1, 0), [(1, 2), (1, 3)], [0, 0, 0, 0, 0, 0]),
-    Problem(Class(4, 1, 0, 0, 12), Tuple{Int64, Int64}[], [12]),                #Rule 1
-    Problem(Class(4, 1, 0, 1, 10), Tuple{Int64, Int64}[], [10]),                #Rule 1
-    Problem(Class(4, 1, 0, 2, 8), Tuple{Int64, Int64}[], [8]),                  #Rule 1
-    Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [7, 0, 0]),
-    Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [6, 1, 0]),
-    Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [5, 2, 0]),
-    Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [5, 1, 1]),
-    Problem(Class(4, 3, 0, 1, 5), Tuple{Int64, Int64}[], [5, 0, 0]),
+    Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [0, 4, 1, 0, 0]),            #Criterion 5
+    Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [0, 5, 0, 0, 0]),            #Criterion 5
+    Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [0, 4, 0, 1, 0]),            #Criterion 5
+    Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [1, 4, 0, 0, 0]),            #Criterion 5
+    Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [4, 1, 0, 0, 0]),            #Criterion 7
+    Problem(Class(3, 3, 2, 0, 5), [(1, 2), (1, 3)], [5, 0, 0, 0, 0]),            #Criterion 7
+    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [0, 2, 1, 0, 0]),            #Criterion 8
+    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [0, 1, 1, 1, 0]),            #Criterion 8
+    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [0, 3, 0, 0, 0]),            #Criterion 8
+    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [0, 2, 0, 1, 0]),            #Criterion 8
+    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [1, 1, 1, 0, 0]),            #Criterion 8
+    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [1, 2, 0, 0, 0]),            #Criterion 8
+    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [1, 1, 0, 1, 0]),            #Criterion 8
+    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [2, 1, 0, 0, 0]),            #Criterion 8
+    Problem(Class(3, 3, 2, 1, 3), [(1, 2), (1, 3)], [3, 0, 0, 0, 0]),            #Criterion 8
+    Problem(Class(3, 3, 2, 2, 1), [(1, 2), (1, 3)], [0, 1, 0, 0, 0]),            #Criterion 8
+    Problem(Class(3, 3, 2, 2, 1), [(1, 2), (1, 3)], [1, 0, 0, 0, 0]),            #Criterion 8
+    Problem(Class(3, 4, 2, 0, 2), [(1, 2), (1, 3)], [0, 0, 0, 2, 0, 0]),         #Criterion 8
+    Problem(Class(3, 4, 2, 0, 2), [(1, 2), (1, 3)], [0, 1, 0, 1, 0, 0]),         #Criterion 8
+    Problem(Class(3, 4, 2, 0, 2), [(1, 2), (1, 3)], [1, 0, 0, 1, 0, 0]),         #Criterion 8
+    Problem(Class(3, 4, 2, 1, 0), [(1, 2), (1, 3)], [0, 0, 0, 0, 0, 0]),         #Criterion 8
+    Problem(Class(4, 1, 0, 0, 12), Tuple{Int64, Int64}[], [12]),                 #Criterion 1
+    Problem(Class(4, 1, 0, 1, 10), Tuple{Int64, Int64}[], [10]),                 #Criterion 1
+    Problem(Class(4, 1, 0, 2, 8), Tuple{Int64, Int64}[], [8]),                   #Criterion 1
+    Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [7, 0, 0]),             #Criterion 3
+    Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [6, 1, 0]),             #Criterion 3
+    Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [5, 2, 0]),             #Criterion 3
+    Problem(Class(4, 3, 0, 0, 7), Tuple{Int64, Int64}[], [5, 1, 1]),             #Criterion 3
+    Problem(Class(4, 3, 0, 1, 5), Tuple{Int64, Int64}[], [5, 0, 0]),             #Criterion 3
     Problem(Class(4, 3, 0, 1, 5), Tuple{Int64, Int64}[], [4, 1, 0]),
-    Problem(Class(4, 2, 1, 0, 8), [(1, 2)], [8, 0, 0]),
-    Problem(Class(4, 2, 1, 0, 8), [(1, 2)], [7, 1, 0]),
-    Problem(Class(4, 2, 1, 0, 8), [(1, 2)], [6, 2, 0]),
-    Problem(Class(4, 2, 1, 0, 8), [(1, 2)], [6, 1, 1]),
-    Problem(Class(4, 2, 1, 1, 6), [(1, 2)], [6, 0, 0]),
+    Problem(Class(4, 2, 1, 0, 8), [(1, 2)], [8, 0, 0]),                          #Criterion 2
+    Problem(Class(4, 2, 1, 0, 8), [(1, 2)], [7, 1, 0]),                          #Criterion 2
+    Problem(Class(4, 2, 1, 0, 8), [(1, 2)], [6, 2, 0]),                          #Criterion 2
+    Problem(Class(4, 2, 1, 0, 8), [(1, 2)], [6, 1, 1]),                          #Criterion 2
+    Problem(Class(4, 2, 1, 1, 6), [(1, 2)], [6, 0, 0]),                          #Criterion 2
     Problem(Class(4, 2, 1, 1, 6), [(1, 2)], [5, 1, 0]),
-    Problem(Class(4, 4, 1, 0, 3), [(1, 2)], [0, 0, 3, 0, 0]),
-    Problem(Class(4, 4, 1, 0, 3), [(1, 2)], [0, 0, 2, 1, 0]),
-    Problem(Class(4, 4, 1, 0, 3), [(1, 2)], [1, 0, 2, 0, 0]),
+    Problem(Class(4, 4, 1, 0, 3), [(1, 2)], [0, 0, 3, 0, 0]),                    #Criterion 6
+    Problem(Class(4, 4, 1, 0, 3), [(1, 2)], [0, 0, 2, 1, 0]),                    #Criterion 6
+    Problem(Class(4, 4, 1, 0, 3), [(1, 2)], [1, 0, 2, 0, 0]),                    #Criterion 6
     Problem(Class(4, 4, 1, 1, 1), [(1, 2)], [0, 0, 1, 0, 0]),
-    Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [0, 3, 1, 0, 0]),
-    Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [0, 4, 0, 0, 0]),
-    Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [0, 3, 0, 1, 0]),
-    Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [1, 3, 0, 0, 0]),
-    Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [3, 1, 0, 0, 0]),
-    Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [4, 0, 0, 0, 0]),
-    Problem(Class(4, 3, 2, 1, 2), [(1, 2), (1, 3)], [0, 1, 1, 0, 0]),
-    Problem(Class(4, 3, 2, 1, 2), [(1, 2), (1, 3)], [0, 2, 0, 0, 0]),
-    Problem(Class(4, 3, 2, 1, 2), [(1, 2), (1, 3)], [0, 1, 0, 1, 0]),
-    Problem(Class(4, 3, 2, 1, 2), [(1, 2), (1, 3)], [1, 1, 0, 0, 0]),
-    Problem(Class(4, 3, 2, 1, 2), [(1, 2), (1, 3)], [2, 0, 0, 0, 0]),
-    Problem(Class(4, 3, 2, 2, 0), [(1, 2), (1, 3)], [0, 0, 0, 0, 0]),
-    Problem(Class(5, 1, 0, 0, 11), Tuple{Int64, Int64}[], [11]),                #Rule 1
-    Problem(Class(5, 1, 0, 1, 9), Tuple{Int64, Int64}[], [9]),                  #Rule 1
-    Problem(Class(5, 1, 0, 2, 7), Tuple{Int64, Int64}[], [7]),                  #Rule 1
-    Problem(Class(5, 4, 0, 0, 4), Tuple{Int64, Int64}[], [4, 0, 0, 0]),
-    Problem(Class(5, 4, 0, 0, 4), Tuple{Int64, Int64}[], [3, 1, 0, 0]),
+    Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [0, 3, 1, 0, 0]),            #Criterion 5
+    Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [0, 4, 0, 0, 0]),            #Criterion 5
+    Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [0, 3, 0, 1, 0]),            #Criterion 5
+    Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [1, 3, 0, 0, 0]),            #Criterion 5
+    Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [3, 1, 0, 0, 0]),            #Criterion 7
+    Problem(Class(4, 3, 2, 0, 4), [(1, 2), (1, 3)], [4, 0, 0, 0, 0]),            #Criterion 7
+    Problem(Class(4, 3, 2, 1, 2), [(1, 2), (1, 3)], [0, 1, 1, 0, 0]),            #Criterion 8
+    Problem(Class(4, 3, 2, 1, 2), [(1, 2), (1, 3)], [0, 2, 0, 0, 0]),            #Criterion 8
+    Problem(Class(4, 3, 2, 1, 2), [(1, 2), (1, 3)], [0, 1, 0, 1, 0]),            #Criterion 8
+    Problem(Class(4, 3, 2, 1, 2), [(1, 2), (1, 3)], [1, 1, 0, 0, 0]),            #Criterion 8
+    Problem(Class(4, 3, 2, 1, 2), [(1, 2), (1, 3)], [2, 0, 0, 0, 0]),            #Criterion 8
+    Problem(Class(4, 3, 2, 2, 0), [(1, 2), (1, 3)], [0, 0, 0, 0, 0]),            #Criterion 8
+    Problem(Class(5, 1, 0, 0, 11), Tuple{Int64, Int64}[], [11]),                 #Criterion 1
+    Problem(Class(5, 1, 0, 1, 9), Tuple{Int64, Int64}[], [9]),                   #Criterion 1
+    Problem(Class(5, 1, 0, 2, 7), Tuple{Int64, Int64}[], [7]),                   #Criterion 1
+    Problem(Class(5, 4, 0, 0, 4), Tuple{Int64, Int64}[], [4, 0, 0, 0]),          #Criterion 4
+    Problem(Class(5, 4, 0, 0, 4), Tuple{Int64, Int64}[], [3, 1, 0, 0]),          #Criterion 4
     Problem(Class(5, 4, 0, 1, 2), Tuple{Int64, Int64}[], [2, 0, 0, 0]),
-    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [0, 0, 5, 0]),
-    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [1, 0, 4, 0]),
-    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [2, 0, 3, 0]),
-    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [1, 1, 3, 0]),
-    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [4, 0, 1, 0]),
-    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [5, 0, 0, 0]),
-    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [4, 1, 0, 0]),
-    Problem(Class(5, 3, 1, 1, 3), [(1, 2)], [0, 0, 3, 0]),
+    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [0, 0, 5, 0]),                       #Criterion 5
+    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [1, 0, 4, 0]),                       #Criterion 5
+    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [2, 0, 3, 0]),                       #Criterion 5
+    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [1, 1, 3, 0]),                       #Criterion 5
+    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [4, 0, 1, 0]),                       #Criterion 3
+    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [5, 0, 0, 0]),                       #Criterion 3
+    Problem(Class(5, 3, 1, 0, 5), [(1, 2)], [4, 1, 0, 0]),                       #Criterion 3
+    Problem(Class(5, 3, 1, 1, 3), [(1, 2)], [0, 0, 3, 0]),                       #Criterion 5
     Problem(Class(5, 3, 1, 1, 3), [(1, 2)], [1, 0, 2, 0]),
     Problem(Class(5, 3, 1, 1, 3), [(1, 2)], [3, 0, 0, 0]),
     Problem(Class(5, 3, 1, 2, 1), [(1, 2)], [0, 0, 1, 0]),
-    Problem(Class(5, 3, 1, 2, 1), [(1, 2)], [1, 0, 0, 0]),
-    Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [6, 0, 0]),
-    Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [5, 1, 0]),
-    Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [4, 2, 0]),
-    Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [4, 1, 1]),
-    Problem(Class(6, 3, 0, 1, 4), Tuple{Int64, Int64}[], [4, 0, 0]),
+    Problem(Class(5, 3, 1, 2, 1), [(1, 2)], [1, 0, 0, 0]), 
+    Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [6, 0, 0]),             #Criterion 3
+    Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [5, 1, 0]),             #Criterion 3
+    Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [4, 2, 0]),             #Criterion 3
+    Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [4, 1, 1]),             #Criterion 3
+    Problem(Class(6, 3, 0, 1, 4), Tuple{Int64, Int64}[], [4, 0, 0]),             #Criterion 3
     Problem(Class(6, 3, 0, 1, 4), Tuple{Int64, Int64}[], [3, 1, 0]),
     Problem(Class(6, 3, 0, 3, 0), Tuple{Int64, Int64}[], [0, 0, 0]),
-    Problem(Class(6, 2, 1, 0, 7), [(1, 2)], [7, 0, 0]),
-    Problem(Class(6, 2, 1, 0, 7), [(1, 2)], [6, 1, 0]),
-    Problem(Class(6, 2, 1, 0, 7), [(1, 2)], [5, 2, 0]),
-    Problem(Class(6, 2, 1, 0, 7), [(1, 2)], [5, 1, 1]),
-    Problem(Class(6, 2, 1, 1, 5), [(1, 2)], [5, 0, 0]),
+    Problem(Class(6, 2, 1, 0, 7), [(1, 2)], [7, 0, 0]),                          #Criterion 2
+    Problem(Class(6, 2, 1, 0, 7), [(1, 2)], [6, 1, 0]),                          #Criterion 2
+    Problem(Class(6, 2, 1, 0, 7), [(1, 2)], [5, 2, 0]),                          #Criterion 2
+    Problem(Class(6, 2, 1, 0, 7), [(1, 2)], [5, 1, 1]),                          #Criterion 2
+    Problem(Class(6, 2, 1, 1, 5), [(1, 2)], [5, 0, 0]),                          #Criterion 2
     Problem(Class(6, 2, 1, 1, 5), [(1, 2)], [4, 1, 0]),
     Problem(Class(6, 2, 1, 3, 1), [(1, 2)], [1, 0, 0]),
-    Problem(Class(7, 2, 0, 0, 8), Tuple{Int64, Int64}[], [8, 0]),
-    Problem(Class(7, 2, 0, 0, 8), Tuple{Int64, Int64}[], [7, 1]),
-    Problem(Class(7, 2, 0, 0, 8), Tuple{Int64, Int64}[], [6, 2]),
-    Problem(Class(7, 2, 0, 0, 8), Tuple{Int64, Int64}[], [5, 3]),
-    Problem(Class(7, 2, 0, 1, 6), Tuple{Int64, Int64}[], [6, 0]),
-    Problem(Class(7, 2, 0, 1, 6), Tuple{Int64, Int64}[], [5, 1]),
+    Problem(Class(7, 2, 0, 0, 8), Tuple{Int64, Int64}[], [8, 0]),                #Criterion 2
+    Problem(Class(7, 2, 0, 0, 8), Tuple{Int64, Int64}[], [7, 1]),                #Criterion 2
+    Problem(Class(7, 2, 0, 0, 8), Tuple{Int64, Int64}[], [6, 2]),                #Criterion 2
+    Problem(Class(7, 2, 0, 0, 8), Tuple{Int64, Int64}[], [5, 3]),                #Criterion 2
+    Problem(Class(7, 2, 0, 1, 6), Tuple{Int64, Int64}[], [6, 0]),                #Criterion 2
+    Problem(Class(7, 2, 0, 1, 6), Tuple{Int64, Int64}[], [5, 1]),                #Criterion 2
     Problem(Class(7, 2, 0, 1, 6), Tuple{Int64, Int64}[], [4, 2]),
     Problem(Class(7, 2, 0, 2, 4), Tuple{Int64, Int64}[], [4, 0]),
-    Problem(Class(8, 1, 0, 0, 10), Tuple{Int64, Int64}[], [10]),                #Rule 1
-    Problem(Class(8, 1, 0, 1, 8), Tuple{Int64, Int64}[], [8]),                  #Rule 1
-    Problem(Class(8, 1, 0, 2, 6), Tuple{Int64, Int64}[], [6])                   #Rule 1
+    Problem(Class(8, 1, 0, 0, 10), Tuple{Int64, Int64}[], [10]),                 #Criterion 1
+    Problem(Class(8, 1, 0, 1, 8), Tuple{Int64, Int64}[], [8]),                   #Criterion 1
+    Problem(Class(8, 1, 0, 2, 6), Tuple{Int64, Int64}[], [6])                    #Criterion 1
    ]
 
 ###############################################################################

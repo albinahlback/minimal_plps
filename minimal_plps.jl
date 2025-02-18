@@ -17,13 +17,14 @@
 
 import Base:
     show, ==
+import Printf: @printf
 import LinearAlgebra:
     norm
 import AbstractAlgebra.Generic:
     FracField, FracFieldElem,
     MatSpace, MatSpaceElem
 import AbstractAlgebra:
-    matrix_space, polynomial_ring, fraction_field, residue_ring,
+    matrix_space, polynomial_ring, fraction_field,
     elem_type, base_ring,
     one, zero,
     is_one, is_zero,
@@ -36,9 +37,12 @@ import Oscar:
     Partition,
     ZZ,
     MPolyRingElem, RingElem,
-    Ring
+    Ring,
+    fpMPolyRingElem
+import Oscar.Native: GF
 import Oscar:
-    partitions, evaluate, det, denominator, numerator, is_prime
+    partitions, evaluate, det, denominator, numerator, is_prime, binomial,
+    gens, minors, ideal, dim, degree, groebner_basis_f4, next_prime, saturation
 import HomotopyContinuation: @var, System, solve, solutions, monodromy_solve,
                              nsolutions, verify_solution_completeness
 import HomotopyContinuation.ModelKit: Variable, Expression
@@ -55,8 +59,10 @@ import HomotopyContinuation.ModelKit: Variable, Expression
 
 dim_camera_space(m::Int) = 11 * m - 15
 
+dim_point_space(pf::Int, pd::Int) = 3 * pf + pd
+dim_line_space(lf::Int, la::Int) = 4 * lf + 2 * la
 dim_point_line_space(pf::Int, pd::Int, lf::Int, la::Int) =
-    3 * pf + pd + 4 * lf + 2 * la
+    dim_point_space(pf, pd) + dim_line_space(lf, la)
 
 dim_image_space(pf::Int, pd::Int, lf::Int, la::Int) =
     2 * pf + pd + 2 * lf + la
@@ -568,9 +574,9 @@ end
 
 candidate_problems = filter(fixup_filter, candidate_problems)
 
-# this turn the 124 classes from Table 2 into 434 balanced problems 
-# that are candidates for being minimal, as claimed in the proof of the 
-# main Theorem 2.3 c) 
+# this turn the 124 classes from Table 2 into 434 balanced problems
+# that are candidates for being minimal, as claimed in the proof of the
+# main Theorem 2.3 c)
 # Note: these candidates do not contain problems violating homography Lemma 4.1
 
 ###############################################################################
@@ -589,10 +595,13 @@ num_vars_pds(cl::Class) = _pd(cl)
 num_vars_lfs(cl::Class) = 4 * _lf(cl)
 num_vars_las(cl::Class) = 2 * _la(cl)
 
-num_vars(cl::Class) = num_vars_cms(cl) + num_vars_pfs(cl) + num_vars_pds(cl) +
-                        num_vars_lfs(cl) + num_vars_las(cl)
+num_vars(cl::Class; nolines::Bool = false) = num_vars_cms(cl) +
+    num_vars_pfs(cl) + num_vars_pds(cl) +
+    (nolines ? 0 : num_vars_lfs(cl) + num_vars_las(cl))
 
-function polynomial_ring(cl::Class, R::S) where {S <: Ring}
+function polynomial_ring(R::S, cl::Class; extravars::Int = 0, nolines::Bool = false) where {S <: Ring}
+    @assert extravars >= 0
+
     syms = Symbol[]
 
     for ix in 1:num_vars_cms(cl)
@@ -604,11 +613,16 @@ function polynomial_ring(cl::Class, R::S) where {S <: Ring}
     for ix in 1:num_vars_pds(cl)
         push!(syms, Symbol("d$ix"))
     end
-    for ix in 1:num_vars_lfs(cl)
-        push!(syms, Symbol("l$ix"))
+    if !nolines
+        for ix in 1:num_vars_lfs(cl)
+            push!(syms, Symbol("l$ix"))
+        end
+        for ix in 1:num_vars_las(cl)
+            push!(syms, Symbol("a$ix"))
+        end
     end
-    for ix in 1:num_vars_las(cl)
-        push!(syms, Symbol("a$ix"))
+    for ix in 1:extravars
+        push!(syms, Symbol("t$ix"))
     end
 
     return polynomial_ring(R, syms)
@@ -624,21 +638,26 @@ struct CXElem{S <: RingElem, T <: MPolyRingElem{S}}
     las::Vector{MatSpaceElem{T}}
 
     # Here R is a base ring, such as integers or finite field
-    function CXElem(pb::Problem, R::V) where {V <: Ring}
+    function CXElem(pb::Problem, R::V; extravars::Int = 0, nolines::Bool = false) where {V <: Ring}
         m, pf, pd, lf, la = _m(pb), _pf(pb), _pd(pb), _lf(pb), _la(pb)
         deps = pb.deps
         adjs = pb.adjs
 
-        U, gens = polynomial_ring(pb.cl, R)
+        U, vars = polynomial_ring(R, pb.cl, extravars=extravars, nolines=nolines)
         z0, o1 = zero(U), one(U)
         C = matrix_space(U, 3, 4) # camera space
         P = matrix_space(U, 4, 1) # point space
-        L = matrix_space(U, 4, 2) # line space
         cms = Vector{MatSpaceElem{elem_type(U)}}(undef, m)
         pfs = Vector{MatSpaceElem{elem_type(U)}}(undef, pf)
         pds = Vector{MatSpaceElem{elem_type(U)}}(undef, pd)
-        lfs = Vector{MatSpaceElem{elem_type(U)}}(undef, lf)
-        las = Vector{MatSpaceElem{elem_type(U)}}(undef, la)
+        if !nolines
+            L = matrix_space(U, 4, 2) # line space
+            lfs = Vector{MatSpaceElem{elem_type(U)}}(undef, lf)
+            las = Vector{MatSpaceElem{elem_type(U)}}(undef, la)
+        else
+            lfs = MatSpaceElem{elem_type(U)}[]
+            las = MatSpaceElem{elem_type(U)}[]
+        end
 
         # First camera on the form (1 0 0 0; 0 1 0 0; 0 0 1 0)
         c1 = zero(C)
@@ -651,79 +670,81 @@ struct CXElem{S <: RingElem, T <: MPolyRingElem{S}}
         c2 = zero(C)
         c2[1, 4] = o1
         c2[2, 1] = o1
-        c2[2, 2:4] = gens[1:3]
-        c2[3, 1:4] = gens[4:7]
+        c2[2, 2:4] = vars[1:3]
+        c2[3, 1:4] = vars[4:7]
         cms[2] = c2
 
-        new_gens = gens[8:end]
+        new_vars = vars[8:end]
 
         # All other cameras on the form (1 * * *; * * * *; * * * *)
         for ix in 0:(m - 3)
             cx = zero(C)
             cx[1, 1] = o1
-            cx[1, 2:4] = new_gens[(1 + 11 * ix):(3 + 11 * ix)]
-            cx[2, 1:4] = new_gens[(4 + 11 * ix):(7 + 11 * ix)]
-            cx[3, 1:4] = new_gens[(8 + 11 * ix):(11 + 11 * ix)]
+            cx[1, 2:4] = new_vars[(1 + 11 * ix):(3 + 11 * ix)]
+            cx[2, 1:4] = new_vars[(4 + 11 * ix):(7 + 11 * ix)]
+            cx[3, 1:4] = new_vars[(8 + 11 * ix):(11 + 11 * ix)]
             cms[ix + 3] = cx
         end
 
-        new_gens = new_gens[(1 + 11 * (m - 2)):end]
+        new_vars = new_vars[(1 + 11 * (m - 2)):end]
 
         # Free points on the form (*; *; *; 1)
         for ix in 0:(pf - 1)
             px = zero(P)
-            px[1:3, 1] = new_gens[(1 + 3 * ix):(3 + 3 * ix)]
+            px[1:3, 1] = new_vars[(1 + 3 * ix):(3 + 3 * ix)]
             px[4, 1] = o1
             pfs[ix + 1] = px
         end
 
-        new_gens = new_gens[(1 + 3 * pf):end]
+        new_vars = new_vars[(1 + 3 * pf):end]
 
         # Dependent points on the form t * p0 + (1 - t) * p1 where t is the
         # variable for the dependent point
         for ix in 1:pd
-            t = new_gens[ix]
+            t = new_vars[ix]
             px = t * pfs[deps[ix][1]] + (o1 - t) * pfs[deps[ix][2]]
             pds[ix] = px
         end
 
-        new_gens = new_gens[(1 + pd):end]
+        new_vars = new_vars[(1 + pd):end]
 
-        # Free lines on the form (* *; * *; 1 0; 0 1)
-        for ix in 0:(lf - 1)
-            lx = zero(L)
-            lx[1, 1:2] = new_gens[(1 + 4 * ix):(2 + 4 * ix)]
-            lx[2, 1:2] = new_gens[(3 + 4 * ix):(4 + 4 * ix)]
-            lx[3, 1] = o1
-            lx[4, 2] = o1
-            lfs[ix + 1] = lx
-        end
-
-        new_gens = new_gens[(1 + 4 * lf):end]
-
-        new_adjs = deepcopy(adjs)
-
-        jx = 1
-        # Adjacent lines on the form (* x1; * x2; 1 x3; 0 x4), where x is the
-        # point that the line is adjacent to
-        for ix in 0:(la - 1)
-            lx = zero(L)
-            lx[1:2, 1] = new_gens[(1 + 2 * ix):(2 + 2 * ix)]
-            lx[3:4, 1] = [o1; z0]
-
-            while new_adjs[jx] == 0
-                jx += 1
+        if !nolines
+            # Free lines on the form (* *; * *; 1 0; 0 1)
+            for ix in 0:(lf - 1)
+                lx = zero(L)
+                lx[1, 1:2] = new_vars[(1 + 4 * ix):(2 + 4 * ix)]
+                lx[2, 1:2] = new_vars[(3 + 4 * ix):(4 + 4 * ix)]
+                lx[3, 1] = o1
+                lx[4, 2] = o1
+                lfs[ix + 1] = lx
             end
-            new_adjs[jx] -= 1
 
-            if jx <= pf
-                lx[1:4, 2] = pfs[jx][1:4, 1]
-            else
-                lx[1:4, 2] = pds[jx - pf][1:4, 1]
+            new_vars = new_vars[(1 + 4 * lf):end]
+
+            new_adjs = deepcopy(adjs)
+
+            jx = 1
+            # Adjacent lines on the form (* x1; * x2; 1 x3; 0 x4), where x is
+            # the point that the line is adjacent to
+            for ix in 0:(la - 1)
+                lx = zero(L)
+                lx[1:2, 1] = new_vars[(1 + 2 * ix):(2 + 2 * ix)]
+                lx[3:4, 1] = [o1; z0]
+
+                while new_adjs[jx] == 0
+                    jx += 1
+                end
+                new_adjs[jx] -= 1
+
+                if jx <= pf
+                    lx[1:4, 2] = pfs[jx][1:4, 1]
+                else
+                    lx[1:4, 2] = pds[jx - pf][1:4, 1]
+                end
+                las[ix + 1] = lx
             end
-            las[ix + 1] = lx
+            @assert is_zero(new_adjs)
         end
-        @assert is_zero(new_adjs)
 
         return new{elem_type(R), elem_type(U)}(pb, cms, pfs, pds, lfs, las)
     end
@@ -743,7 +764,7 @@ struct NaiveImageVarietyElem{S <: RingElem, T <: MPolyRingElem{S}}
     lfs::Vector{MatSpaceElem{T}}
     las::Vector{MatSpaceElem{T}}
 
-    function NaiveImageVarietyElem(cx::CXElem)
+    function NaiveImageVarietyElem(cx::CXElem; nolines::Bool = false)
         pb = cx.pb
         m, pf, pd, lf, la = _m(pb), _pf(pb), _pd(pb), _lf(pb), _la(pb)
         U = parent(cx.cms[1][1, 1])
@@ -751,8 +772,13 @@ struct NaiveImageVarietyElem{S <: RingElem, T <: MPolyRingElem{S}}
 
         pfs = Vector{MatSpaceElem{elem_type(U)}}(undef, m * pf)
         pds = Vector{MatSpaceElem{elem_type(U)}}(undef, m * pd)
-        lfs = Vector{MatSpaceElem{elem_type(U)}}(undef, m * lf)
-        las = Vector{MatSpaceElem{elem_type(U)}}(undef, m * la)
+        if !nolines
+            lfs = Vector{MatSpaceElem{elem_type(U)}}(undef, m * lf)
+            las = Vector{MatSpaceElem{elem_type(U)}}(undef, m * la)
+        else
+            lfs = MatSpaceElem{elem_type(U)}[]
+            las = MatSpaceElem{elem_type(U)}[]
+        end
 
         for ix in 1:m
             # free points
@@ -765,18 +791,25 @@ struct NaiveImageVarietyElem{S <: RingElem, T <: MPolyRingElem{S}}
                 pds[jx + pd * (ix - 1)] = cx.cms[ix] * cx.pds[jx]
             end
 
-            # free lines
-            for jx in 1:lf
-                lfs[jx + lf * (ix - 1)] = cx.cms[ix] * cx.lfs[jx]
-            end
+            if !nolines
+                # free lines
+                for jx in 1:lf
+                    lfs[jx + lf * (ix - 1)] = cx.cms[ix] * cx.lfs[jx]
+                end
 
-            # adj. lines
-            for jx in 1:la
-                las[jx + la * (ix - 1)] = cx.cms[ix] * cx.las[jx]
+                # adj. lines
+                for jx in 1:la
+                    las[jx + la * (ix - 1)] = cx.cms[ix] * cx.las[jx]
+                end
             end
         end
 
         return new{elem_type(R), elem_type(U)}(pb, pfs, pds, lfs, las)
+    end
+
+    function NaiveImageVarietyElem(pb::Problem, R::V; extravars::Int = 0) where {V <: Ring}
+        cx = CXElem(pb, R, extravars=extravars)
+        return NaiveImageVarietyElem(cx)
     end
 end
 
@@ -978,11 +1011,11 @@ end
 # computing classes of point-line balanced problems
 ###############################################################################
 
-# Some big prime that still allows arithmetic in double precision without
-# losing too much precision.
-big_prime = UInt64(281474976710677)
+# Some big prime that Singular allows.
+# big_prime = UInt64(2^29 - 3)
+big_prime = next_prime(100000)
 @assert is_prime(big_prime)
-modring = residue_ring(ZZ, big_prime)[1]
+modring = GF(big_prime)
 
 ###############################################################################
 # numerical minimality check
@@ -1030,9 +1063,9 @@ function generate_minimal_problems(numevals::Int = 1000)
     return res
 end
 
-# This checks the 434 candidate problems for minimality and proves 
+# This checks the 434 candidate problems for minimality and proves
 # that 285 are indeed minimal, as claimed in the proof of Main Theorem 2.3 c)
-                
+
 ###############################################################################
 # all minimal problems
 ###############################################################################
@@ -1476,7 +1509,7 @@ nonminimal_candidate_problems = [
     Problem(Class(5, 3, 1, 1, 3), [(1, 2)], [1, 0, 2, 0]),
     Problem(Class(5, 3, 1, 1, 3), [(1, 2)], [3, 0, 0, 0]),
     Problem(Class(5, 3, 1, 2, 1), [(1, 2)], [0, 0, 1, 0]),
-    Problem(Class(5, 3, 1, 2, 1), [(1, 2)], [1, 0, 0, 0]), 
+    Problem(Class(5, 3, 1, 2, 1), [(1, 2)], [1, 0, 0, 0]),
     Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [6, 0, 0]),             #Criterion 3
     Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [5, 1, 0]),             #Criterion 3
     Problem(Class(6, 3, 0, 0, 6), Tuple{Int64, Int64}[], [4, 2, 0]),             #Criterion 3
@@ -1518,7 +1551,7 @@ nonminimal_candidate_problems = [
 ###############################################################################
 
 # HomotopyContinuation.jl does not provide a way to convert from Oscar
-# polynomials to their polynomials.  Hence, we write our own.
+# polynomials to their polynomials.  Hence, we write our own function for this.
 function evaluate(poly::MPolyRingElem{T}, vals::Vector{Variable}) where {T <: RingElem}
     @assert length(vals) == number_of_variables(parent(poly))
 
@@ -1731,4 +1764,265 @@ function assert_degs_7pts_is_correct()
                                     - length(pb_degs_pf5_1)
                                     - length(pb_degs_pf5_2))
     @assert all(x -> x[2] == 1, pb_degs_pf4)
+end
+
+###############################################################################
+###############################################################################
+# Gröbner computations
+###############################################################################
+###############################################################################
+
+# This section is here to verify the degree whenever it is feasible to do so.
+
+number_of_minors(m::Int, n::Int, k::Int) = binomial(m, k) * binomial(n, k)
+
+function system_of_polynomials(pb::Problem)
+    m, pf, pd, lf, la = _m(pb), _pf(pb), _pd(pb), _lf(pb), _la(pb)
+    deps, adjs = pb.deps, deepcopy(pb.adjs)
+
+    extravars = m * (pf + pd)
+
+    cx = CXElem(pb, modring, extravars=extravars, nolines=true)
+    niv = NaiveImageVarietyElem(cx, nolines=true)
+    cms = view(cx.cms, 1:length(cx.cms))
+    pfn = view(niv.pfs, 1:length(niv.pfs))
+    pdn = view(niv.pds, 1:length(niv.pds))
+    P = parent(cms[1][1, 1])
+    vars = gens(P)
+    vs = view(vars, num_vars(pb.cl, nolines=true) + 1:length(vars))
+
+    # Used for the equations derived from lines
+    num3minors = number_of_minors(4, m, 3)
+    num2minors = number_of_minors(4, m, 2)
+    M = matrix_space(P, 4, m)
+    mats = Vector{elem_type(M)}(undef, lf + la)
+
+    numeqs = m * (3 * pf + 2 * pd) + num3minors * (lf + la)
+    eqs = Vector{elem_type(P)}(undef, numeqs)
+    es = view(eqs, 1:length(eqs))
+
+    R = modring
+    @assert modring == base_ring(P)
+    numrandpts = m * (2 * pf + pd + 2 * lf + la)
+    randpts = rand(R, numrandpts)
+
+    ix_pf = 0
+    rs_pf = view(randpts, ix_pf + 1:ix_pf + 2 * m * pf)
+    ix_pd = ix_pf + 2 * m * pf
+    rs_pd = view(randpts, ix_pd + 1:ix_pd +     m * pd) # parameter t
+    ix_lf = ix_pd +     m * pd
+    rs_lf = view(randpts, ix_lf + 1:ix_lf + 2 * m * lf)
+    ix_la = ix_lf + 2 * m * lf
+    rs_la = view(randpts, ix_la + 1:ix_la +     m * la)
+
+    rs2_pd = Vector{elem_type(R)}(undef, 2 * m * pd) # t * x + (1 - t) * y
+
+    for jx in 1:pd
+        for ix in 1:m
+            ax, bx = deps[jx][1], deps[jx][2]
+            rt = rs_pd[(jx - 1) + pd * (ix - 1) + 1]
+
+            ra1 = rs_pf[2 * ((ax - 1) + pf * (ix - 1)) + 1]
+            ra2 = rs_pf[2 * ((ax - 1) + pf * (ix - 1)) + 2]
+            rb1 = rs_pf[2 * ((bx - 1) + pf * (ix - 1)) + 1]
+            rb2 = rs_pf[2 * ((bx - 1) + pf * (ix - 1)) + 2]
+
+            rs2_pd[2 * ((jx - 1) + pd * (ix - 1)) + 1] = rt * ra1 + (1 - rt) * rb1
+            rs2_pd[2 * ((jx - 1) + pd * (ix - 1)) + 2] = rt * ra2 + (1 - rt) * rb2
+        end
+    end
+
+    # Free points
+    for ix in 1:m
+        for jx in 1:pf
+            r1 = rs_pf[2 * ((jx - 1) + pf * (ix - 1)) + 1]
+            r2 = rs_pf[2 * ((jx - 1) + pf * (ix - 1)) + 2]
+
+            tmp = pfn[jx + pf * (ix - 1)]
+
+            es[3 * (jx - 1) + 1] = tmp[1, 1] - r1 * tmp[3, 1]
+            es[3 * (jx - 1) + 2] = tmp[2, 1] - r2 * tmp[3, 1]
+            es[3 * (jx - 1) + 3] = tmp[3, 1] * vs[jx] - 1
+        end
+        es = view(es, 3 * pf + 1:length(es))
+        vs = view(vs,     pf + 1:length(vs))
+    end
+
+    # Dependent points
+    for ix in 1:m
+        for jx in 1:pd
+            r1 = rs_pd[(jx - 1) + pd * (ix - 1) + 1]
+
+            ax, bx = deps[jx][1], deps[jx][2]
+
+            a1 = pfn[ax + pf * (ix - 1)][1, 1] // pfn[ax + pf * (ix - 1)][3, 1]
+            b1 = pfn[bx + pf * (ix - 1)][1, 1] // pfn[bx + pf * (ix - 1)][3, 1]
+            v1 = pdn[jx + pd * (ix - 1)][1, 1] // pdn[jx + pd * (ix - 1)][3, 1]
+            tmp = (v1 - b1) // (a1 - b1)
+
+            es[2 * (jx - 1) + 1] = numerator(tmp) - r1 * denominator(tmp)
+            es[2 * (jx - 1) + 2] = denominator(tmp) * vs[jx] - 1
+        end
+        es = view(es, 2 * pd + 1:length(es))
+        vs = view(vs,     pd + 1:length(vs))
+    end
+
+    rp = matrix_space(P, 3, 1)()
+
+    # Free lines
+    for jx in 1:lf
+        mats[jx] = M()
+        for ix in 1:m
+            rp[1, 1] = rs_lf[2 * ((jx - 1) + lf * (ix - 1)) + 1]
+            rp[2, 1] = rs_lf[2 * ((jx - 1) + lf * (ix - 1)) + 2]
+            rp[3, 1] = 1
+            mats[jx][:, ix] = transpose(cms[ix]) * rp
+        end
+
+        es[1:num3minors] = minors(mats[jx], 3)
+        es = view(es, num3minors + 1:length(es))
+    end
+
+    # Adjacent lines
+    lx = 1
+    for jx in 1:la
+        while adjs[lx] == 0
+            lx += 1
+        end
+        adjs[lx] -= 1
+
+        mats[lf + jx] = M()
+        for ix in 1:m
+            r1 = rs_la[(jx - 1) + la * (ix - 1) + 1]
+            if lx <= pf
+                p1 = rs_pf[2 * ((lx - 1) + pf * (ix - 1)) + 1]
+                p2 = rs_pf[2 * ((lx - 1) + pf * (ix - 1)) + 2]
+            else
+                p1 = rs2_pd[2 * ((lx - pf - 1) + pd * (ix - 1)) + 1]
+                p2 = rs2_pd[2 * ((lx - pf - 1) + pd * (ix - 1)) + 2]
+            end
+            rp[1, 1] = -1
+            rp[2, 1] = r1
+            rp[3, 1] = p1 - r1 * p2
+            mats[lf + jx][:, ix] = transpose(cms[ix]) * rp
+        end
+
+        es[1:num3minors] = minors(mats[lf + jx], 3)
+        es = view(es, num3minors + 1:length(es))
+    end
+    @assert iszero(adjs)
+
+    @assert length(es) == 0
+    @assert length(vs) == 0
+
+    return eqs, mats, num2minors
+end
+
+# Asserts that the degree from Gröbner bases aligns with monodromy computations
+function is_degree_correct_gb(
+        pb::Problem;
+        interactive::Bool = false
+    )
+    # Get corresponding degree
+    deg = filter(x -> x[1] == pb, pb_degs)
+    if length(deg) == 0
+        deg = filter(x -> x[1] == pb, pb_degs_7pts)
+    end
+    @assert length(deg) == 1
+    deg = deg[1][2]
+
+    interactive && print("(0)")
+    sop, mats = system_of_polynomials(pb)
+    I = ideal(sop)
+    interactive && print("(1)")
+    if dim(I) == 0
+        interactive && print("(d0)")
+        deg_gb = degree(I)
+        @assert deg_gb >= deg
+        if deg_gb == deg
+            interactive && print(" ")
+            return (deg_gb, deg_gb == deg)
+        end
+    end
+
+    # Since naive computation does not work, we start to add more constraints
+    m, pf, pd, lf, la = _m(pb), _pf(pb), _pd(pb), _lf(pb), _la(pb)
+    adjs = pb.adjs
+    interactive && print("(e)")
+
+    # Lines adjacent to dependent points seems to be the most problematic ones
+    for jx in lf + sum(adjs[1:pf]) + 1:lf + la
+        mns = minors(mats[jx], 2)
+        for mn in mns
+            J = ideal(mn)
+            I = saturation(I, J)
+            interactive && print("(1)")
+            if dim(I) == 0
+                interactive && print("(d0)")
+                deg_gb = degree(I)
+                @assert deg_gb >= deg
+                if deg_gb == deg
+                    interactive && print(" ")
+                    return (deg_gb, deg_gb == deg)
+                end
+            end
+        end
+    end
+
+    # Then we start adding adjacent lines to free points
+    for jx in lf + 1:lf + sum(adjs[1:pf])
+        mns = minors(mats[jx], 2)
+        for mn in mns
+            J = ideal(mn)
+            I = saturation(I, J)
+            interactive && print("(1)")
+            if dim(I) == 0
+                interactive && print("(d0)")
+                deg_gb = degree(I)
+                @assert deg_gb >= deg
+                if deg_gb == deg
+                    interactive && print(" ")
+                    return (deg_gb, deg_gb == deg)
+                end
+            end
+        end
+    end
+
+    # Finally we add free lines
+    for lx in 1:lf
+        mns = minors(mats[jx], 2)
+        for mn in mns
+            J = ideal(mn)
+            I = saturation(I, J)
+            interactive && print("(1)")
+            if dim(I) == 0
+                interactive && print("(d0)")
+                deg_gb = degree(I)
+                @assert deg_gb >= deg
+                if deg_gb == deg
+                    interactive && print(" ")
+                    return (deg_gb, deg_gb == deg)
+                end
+            end
+        end
+    end
+
+    error()
+end
+
+function assert_degrees_are_correct_gb(
+        pbs::Vector{Problem} = filter(x -> _m(x) == 3, minimal_problems);
+        interactive::Bool = false
+    )
+    num_ok = 0
+    for (ix, pb) in enumerate(pbs)
+        @printf("%3ld, (%ld, %ld, %ld, %ld,%2ld): ",
+                ix, _m(pb), _pf(pb), _pd(pb), _lf(pb), _la(pb))
+        ret = is_degree_correct_gb(pb, interactive=interactive)
+        @assert ret[2] "$ret"
+        num_ok += ret[2]
+        println(ret)
+    end
+
+    println("\nAll okay!")
 end

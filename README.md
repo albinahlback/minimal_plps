@@ -11,3 +11,20 @@ The required packages for running this software with Julia are:
 - [AbstractAlgebra.jl](https://github.com/Nemocas/AbstractAlgebra.jl/),
 - [Oscar.jl](https://github.com/oscar-system/Oscar.jl),
 - [HomotopyContinuation.jl](https://github.com/JuliaHomotopyContinuation/HomotopyContinuation.jl)
+
+## Running computations
+
+All functions lie within `minimal_plps.jl`.  In Julia, run
+`include("minimal_plps.jl")` to get all functionalities.
+
+### Compute all candidate point-line minimal problems
+
+TODO
+
+### Compute all point-line minimal problems
+
+TODO
+
+### Compute degrees of all point-line minimal problems
+
+TODO

@@ -1919,10 +1919,7 @@ function system_of_polynomials(pb::Problem)
 end
 
 # Asserts that the degree from Gröbner bases aligns with monodromy computations
-function is_degree_correct_gb(
-        pb::Problem;
-        interactive::Bool = false
-    )
+function is_degree_correct_gb(pb::Problem)
     # Get corresponding degree
     deg = filter(x -> x[1] == pb, pb_degs)
     if length(deg) == 0
@@ -1931,16 +1928,13 @@ function is_degree_correct_gb(
     @assert length(deg) == 1
     deg = deg[1][2]
 
-    interactive && print("(0)")
+    # Get system of polynomials
     sop, mats = system_of_polynomials(pb)
     I = ideal(sop)
-    interactive && print("(1)")
     if dim(I) == 0
-        interactive && print("(d0)")
         deg_gb = degree(I)
         @assert deg_gb >= deg
         if deg_gb == deg
-            interactive && print(" ")
             return (deg_gb, deg_gb == deg)
         end
     end
@@ -1948,7 +1942,6 @@ function is_degree_correct_gb(
     # Since naive computation does not work, we start to add more constraints
     m, pf, pd, lf, la = _m(pb), _pf(pb), _pd(pb), _lf(pb), _la(pb)
     adjs = pb.adjs
-    interactive && print("(e)")
 
     # Lines adjacent to dependent points seems to be the most problematic ones
     for jx in lf + sum(adjs[1:pf]) + 1:lf + la
@@ -1956,13 +1949,10 @@ function is_degree_correct_gb(
         for mn in mns
             J = ideal(mn)
             I = saturation(I, J)
-            interactive && print("(1)")
             if dim(I) == 0
-                interactive && print("(d0)")
                 deg_gb = degree(I)
                 @assert deg_gb >= deg
                 if deg_gb == deg
-                    interactive && print(" ")
                     return (deg_gb, deg_gb == deg)
                 end
             end
@@ -1975,13 +1965,10 @@ function is_degree_correct_gb(
         for mn in mns
             J = ideal(mn)
             I = saturation(I, J)
-            interactive && print("(1)")
             if dim(I) == 0
-                interactive && print("(d0)")
                 deg_gb = degree(I)
                 @assert deg_gb >= deg
                 if deg_gb == deg
-                    interactive && print(" ")
                     return (deg_gb, deg_gb == deg)
                 end
             end
@@ -1994,13 +1981,10 @@ function is_degree_correct_gb(
         for mn in mns
             J = ideal(mn)
             I = saturation(I, J)
-            interactive && print("(1)")
             if dim(I) == 0
-                interactive && print("(d0)")
                 deg_gb = degree(I)
                 @assert deg_gb >= deg
                 if deg_gb == deg
-                    interactive && print(" ")
                     return (deg_gb, deg_gb == deg)
                 end
             end
@@ -2010,15 +1994,12 @@ function is_degree_correct_gb(
     error()
 end
 
-function assert_degrees_are_correct_gb(
-        pbs::Vector{Problem} = filter(x -> _m(x) == 3, minimal_problems);
-        interactive::Bool = false
-    )
+function assert_degrees_are_correct_gb(pbs::Vector{Problem} = filter(x -> _m(x) == 3, minimal_problems))
     num_ok = 0
     for (ix, pb) in enumerate(pbs)
         @printf("%3ld, (%ld, %ld, %ld, %ld,%2ld): ",
                 ix, _m(pb), _pf(pb), _pd(pb), _lf(pb), _la(pb))
-        ret = is_degree_correct_gb(pb, interactive=interactive)
+        ret = is_degree_correct_gb(pb)
         @assert ret[2] "$ret"
         num_ok += ret[2]
         println(ret)

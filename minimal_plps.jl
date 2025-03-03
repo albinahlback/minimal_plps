@@ -1,6 +1,6 @@
 #=  minimal_plps.jl:  Computions of point-line minimal problems
-    Copyright (C) 2025  Albin Ahlbäck
-    Copyright (C) 2025  Kim Kiehn
+    Copyright (C) 2025  REDACTED
+    Copyright (C) 2025  REDACTED
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -104,7 +104,7 @@ end
 
 finite_views = [m for m in 3:9]
 
-# All possible point configuration on the form (pf, pd).  Taken from Albin's
+# All possible point configuration on the form (pf, pd).  Taken from REDACTED's
 # thesis.
 possible_point_configurations =
     [(0, 0);
@@ -550,7 +550,7 @@ end
 candidate_problems = calculate_candidate_problems()
 
 # FIXUP: For (pf, pd) = (3, 2), we have one symmetry more which we haven't
-# accounted for in the V shaped problem, as noted by Kim, which appear when the
+# accounted for in the V shaped problem, as noted by REDACTED, which appear when the
 # ends has the same number of adjacent lines prescribed to them.
 #
 # Note, however, that this is the only case that this appears.  Similar things

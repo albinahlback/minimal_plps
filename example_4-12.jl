@@ -1,5 +1,5 @@
 #=  example_4-12.jl:  Code for running Example 4.12
-    Copyright (C) 2025  Kim Kiehn
+    Copyright (C) 2025  REDACTED
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

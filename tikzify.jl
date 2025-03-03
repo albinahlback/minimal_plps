@@ -1,5 +1,5 @@
 #=  tikzify.jl:  Draw point-line problems in TikZ
-    Copyright (C) 2025  Albin Ahlbäck
+    Copyright (C) 2025  REDACTED
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

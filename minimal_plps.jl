@@ -1,5 +1,6 @@
 #=  minimal_plps.jl:  Computions of point-line minimal problems
     Copyright (C) 2025  Albin Ahlbäck
+    Copyright (C) 2025  Kim Lukas Kiehn
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1774,7 +1775,174 @@ end
 
 # This section is here to verify the degree whenever it is feasible to do so.
 
+###############################################################################
+# helper functions
+###############################################################################
+
 number_of_minors(m::Int, n::Int, k::Int) = binomial(m, k) * binomial(n, k)
+
+###############################################################################
+# specific case(s) by factorizing into subproblems
+###############################################################################
+
+# Returns the systems (note plural form) of polynomials for the minimal problem
+# with 4 views and 9 lines.  This is a factorization into two subproblems.
+#
+# This makes it feasible to verify the degree for all problems with 4 views, as
+# the computations for this problems takes far too long.
+function degree_m4_l9()
+    m, pf, pd, lf, la = 4, 1, 0, 3, 6
+    deps = Tuple{Int, Int}[]
+    adjs = [6]
+
+    ################
+    # Subproblem 1 #
+    ################
+
+    # C' as in 4.12 has 7 variables and the subproblem does not contain any
+    # free lines. The point and the first 4 adjacent lines are normalised.
+    nvars1 = 7 * m + 3 * (pf - 1) + 2 * (la - 4)
+    K1, vars1 = polynomial_ring(modring, nvars1)
+    C1 = matrix_space(K1, 3, 4)
+    P1 = matrix_space(K1, 4, 1)
+    L1 = matrix_space(K1, 4, 2)
+    cms1 = [C1() for _ in 1:m]
+    pfs1 = [P1() for _ in 1:pf]
+    # No dependent points
+    # No free lines represented
+    las1 = [L1() for _ in 1:la]
+    eqs = Vector{elem_type(K1)}(undef, m * (2 * pf + la))
+    rds = rand(modring, m * (2 * pf + la))
+    es = view(eqs, 1:length(eqs))
+    rs = view(rds, 1:length(rds))
+    vs = view(vars1, 1:length(vars1))
+
+    for ix in 1:m
+        # Cameras in C'
+        cms1[ix] = K1[    1     1     1     1;
+                      vs[1] vs[2] vs[3] vs[4];
+                      vs[5] vs[6]     1 vs[7]]
+        vs = view(vs, 7 + 1:length(vs))
+    end
+
+    # Point is normalized
+    @assert pf == 1
+    pfs1[1] = K1[1; 0; 0; 0]
+
+    # First four lines are normalized
+    las1[1][:, 1] = K1[0; 1; 0; 0]
+    las1[2][:, 1] = K1[0; 0; 1; 0]
+    las1[3][:, 1] = K1[0; 0; 0; 1]
+    las1[4][:, 1] = K1[0; 1; 1; 1]
+    for jx in 5:la
+        # The remaining two lines are stored by one additional
+        # point (0, x, y, 1) on it.
+        las1[jx][:, 1] = K1[0; vs[1]; vs[2]; 1]
+        vs = view(vs, 2 + 1:length(vs))
+    end
+    for jx in 1:la
+        las1[jx][:, 2] = pfs1[1]
+    end
+
+    for ix in 1:m
+        for jx in 1:pf
+            tp = cms1[ix] * pfs1[jx]
+            es[1] = tp[1, 1] - rs[1] * tp[3, 1]
+            es[2] = tp[2, 1] - rs[2] * tp[3, 1]
+            es = view(es, 2 + 1:length(es))
+            rs = view(rs, 2 + 1:length(rs))
+        end
+    end
+
+    # The main code uses here minors to eliminate the variables as it is also
+    # done for free lines below.
+    ts = Vector{elem_type(K1)}(undef, m * la)
+    for ix in 1:m
+        for jx in 1:la
+            tp = cms1[ix] * las1[jx]
+            x = tp[1, 1] // (tp[1, 1] - tp[3, 1] * tp[1, 2] // tp[3, 2])
+            t = (1 - x) * (tp[2, 1] // tp[3, 1]) + x * (tp[2, 2] // tp[3, 2])
+            ts[jx + la * (ix - 1)] = denominator(t)
+            es[1] = numerator(t) - rs[1] * denominator(t)
+            es = view(es, 1 + 1:length(es))
+            rs = view(rs, 1 + 1:length(rs))
+        end
+    end
+
+    @assert length(es) == length(vs) == length(rs) == 0
+
+    I = ideal(eqs)
+    # Since the equaitons come from rational functions we have to ensure that
+    # the denominators are non-zero.
+    for t in ts
+        J = ideal(t)
+        I = saturation(I, J)
+    end
+    @assert dim(I) == 0
+    deg1 = degree(I)
+
+    ################
+    # Subproblem 2 #
+    ################
+
+    # In this subproblem we reintroduce the stabilisers.  One would normally
+    # need variables for the free lines but we eliminate those variables by
+    # using minors.
+    nvars2 = 4 * (m - 1)
+    K2, vars2 = polynomial_ring(modring, nvars2)
+    C2 = matrix_space(K2, 3, 4)
+    cms2 = [C2() for _ in 1:m]
+    eqs = Vector{elem_type(K2)}(undef, lf * number_of_minors(m, 4, 3))
+    rds = rand(modring, 7 * m + 2 * m * lf) # first subproblem is now fixed
+    es = view(eqs, 1:length(eqs))
+    rs = view(rds, 1:length(rds))
+    vs = view(vars2, 1:length(vars2))
+
+    for ix in 1:m
+        cms2[ix] = K2[    1     1     1     1;
+                      rs[1] rs[2] rs[3] rs[4];
+                      rs[5] rs[6]     1 rs[7]]
+        rs = view(rs, 7 + 1:length(rs))
+    end
+    for ix in 2:m
+        # Reintroduce the variables from the stabilisers to the cameras except
+        # for the first one to fix PGL4 action.
+        cms2[ix] *= K2[vs[1] vs[2] vs[3] vs[4];
+                           0     1     0     0;
+                           0     0     1     0;
+                           0     0     0     1]
+        vs = view(vs, 4 + 1:length(vs))
+    end
+
+    M = matrix_space(K2, 4, m)
+    tm = M()
+    for jx in 1:lf
+        for ix in 1:m
+            tl = K2[rs[1]; rs[2]; 1]
+            tm[:, ix] = transpose(cms2[ix]) * tl
+            rs = view(rs, 2 + 1:length(rs))
+        end
+
+        mms = minors(tm, 3)
+
+        for (ix, mm) in enumerate(mms)
+            es[ix] = mm
+        end
+        es = view(es, length(mms) + 1:length(es))
+    end
+
+    @assert length(es) == length(vs) == length(rs) == 0
+
+    I = ideal(eqs)
+    @assert dim(I) == 0
+    deg2 = degree(I)
+
+    return deg1 * deg2
+end
+
+###############################################################################
+# generic cases
+###############################################################################
 
 function system_of_polynomials(pb::Problem)
     m, pf, pd, lf, la = _m(pb), _pf(pb), _pd(pb), _lf(pb), _la(pb)
@@ -1927,6 +2095,12 @@ function is_degree_correct_gb(pb::Problem)
     end
     @assert length(deg) == 1
     deg = deg[1][2]
+
+    # Treat special case
+    if (_m(pb), _pf(pb), _pd(pb), _lf(pb), _la(pb)) == (4, 1, 0, 3, 6)
+        deg_gb = degree_m4_l9()
+        return (deg_gb, deg_gb == deg)
+    end
 
     # Get system of polynomials
     sop, mats = system_of_polynomials(pb)

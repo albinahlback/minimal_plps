@@ -19,28 +19,69 @@ The required packages for running this software with Julia are:
 ## Running computations
 
 All functions lie within `minimal_plps.jl`.  In Julia, run
-`include("minimal_plps.jl")` to get all functionalities.
+```julia
+include("minimal_plps.jl")
+```
+to get all functionalities.
 
 ### Classes of balanced point-line problems
 
 To compute all classes of balanced point-line problems, that is, all tuples
-$(m, p^f, p^d, l^f, l^a)$
+$(m, p^f, p^d, l^f, l^a)$, run
+```julia
+calculate_balanced_classes()
+```
+The result is always computed during startup, and is stored in
+`balanced_classes`.
 
-### Compute all candidate point-line minimal problems
+### Candidates of point-line minimal problems
 
-TODO
+To compute all *candidates* of point-line minimal problems where
+$p^f + p^d < 7$, run
+```julia
+calculate_candidate_problems()
+```
+The result is always computed during startup, and is stored in
+`candidate_problems`.
 
-### Compute all point-line minimal problems
+All *candidates* of point-line minimal problems where $p^f + p^d = 7$ is stored
+in `candidate_problems_7pts`, and is enumerated by hand.
 
-TODO
+### Point-line minimal problems
 
-### Compute degrees of all point-line minimal problems
+To check whether a problem `pb` is minimal, run
+```julia
+is_minimal(pb)
+```
+This runs a numerical check of minimality (as opposed to symbolic, due to being
+computationally infeasible).  To explicitly set the number of evaluations to
+`n` used in `is_minimal`, run `is_minimal(pb, numevals=n)`.
+
+All minimal problems for $p^f + p^d < 7$ and $p^f + p^d = 7$ are stored in
+`minimal_problems` and `minimal_problems_7pts`, respectively.  To check that
+these are correct, run
+```julia
+assert_minimal_problems_is_correct()
+```
+and
+```julia
+assert_minimal_problems_7pts_is_correct()
+```
+respectively.  These also accept an optional argument `numevals`, just like
+`is_minimal`.
+
+We also enumerate all candidates of minimal problems that turned out to be
+non-minimal, and list the criteria that makes them non-minimal.  These are
+listed in the variable `nonminimal_candidate_problems`, and the criteria are
+listed in the comments in the code.
+
+### Degrees of point-line minimal problems
 
 TODO
 
 ## Running Example 4.12
 
 To run Example 4.12 in the article, open Julia and run
-```
+```julia
 include("example_4-12.jl")
 ```

@@ -1,5 +1,9 @@
 # Computing point-line minimal problems
 
+This code is supplementary material for the article
+
+> PLMP -- Point-Line Minimal Problems for Projective SfM
+
 ## Prerequisites
 
 We use [Julia](https://julialang.org/) for the computations.  If you intend to
@@ -17,6 +21,11 @@ The required packages for running this software with Julia are:
 All functions lie within `minimal_plps.jl`.  In Julia, run
 `include("minimal_plps.jl")` to get all functionalities.
 
+### Classes of balanced point-line problems
+
+To compute all classes of balanced point-line problems, that is, all tuples
+$(m, p^f, p^d, l^f, l^a)$
+
 ### Compute all candidate point-line minimal problems
 
 TODO
@@ -28,3 +37,10 @@ TODO
 ### Compute degrees of all point-line minimal problems
 
 TODO
+
+## Running Example 4.12
+
+To run Example 4.12 in the article, open Julia and run
+```
+include("example_4-12.jl")
+```

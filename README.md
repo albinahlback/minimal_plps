@@ -4,6 +4,8 @@ This code is supplementary material for the article
 
 > PLMP -- Point-Line Minimal Problems for Projective SfM
 
+by Kim Lukas
+
 ## Prerequisites
 
 We use [Julia](https://julialang.org/) for the computations.  If you intend to
@@ -77,7 +79,44 @@ listed in the comments in the code.
 
 ### Degrees of point-line minimal problems
 
-TODO
+#### Monodromy
+
+All point-line minimal problems along with their degrees as given by monodromy
+are given as tuples `(pb, deg)` in the variables `pb_degs` and `pb_degs_7pts`
+for $p^f + p^d < 7$ and $p^f + p^d = 7$, respectively.  These are not
+calculated during startup, so to assure that these are correct according to
+monodromy, run
+```julia
+assert_degs_is_correct()
+```
+and
+```julia
+assert_degs_7pts_is_correct()
+```
+
+#### Gröbner basis
+
+Recall that monodromy yields a lower bound for the degree.  To verify that this
+lower bound is actually the degree, we calculate the degree using Gröbner basis
+to get an upper bound of the degree, and verify that this is the same as the
+lower bound.
+
+To assert that the degrees for an array of problems `pbs` are correct, run
+```julia
+assert_degrees_are_correct_gb(pbs)
+```
+If no argument is given, `pbs` will default to all minimal point-line problems
+with three views.
+
+For modern mid-end computers, this is expected to terminate within an hour or
+so for all problems with three to four views.  The most computationally heavy
+problem in four views (the one in the class
+$(m, p^f, p^d, l^f, l^a) = (4, 1, 0, 3, 6)$) is factorized into subproblems as
+a special case in order to make it computationally feasible.
+
+While it is expected to be able to verify some problems for higher views, the
+memory consumption and run time grows very fast, in particular for higher line
+counts.
 
 ## Running Example 4.12
 

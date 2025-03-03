@@ -1683,6 +1683,11 @@ degs = [36, 6, 23, 23, 15, 4, 6, 16, 4, 12, 16, 2, 9, 15, 17, 9, 12, 13, 8, 9,
 @assert length(degs) == length(minimal_problems)
 pb_degs = [(minimal_problems[ix], degs[ix]) for ix in 1:length(degs)]
 
+function assert_degs_is_correct()
+    calculated_degs = degrees()
+    @assert calculated_degs == degs
+end
+
 ###############################################################################
 ###############################################################################
 # minimal problems for p = 7

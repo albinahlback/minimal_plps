@@ -1,6 +1,6 @@
 #=  minimal_plps.jl:  Computions of point-line minimal problems
     Copyright (C) 2025  Albin Ahlbäck
-    Copyright (C) 2025  Kim Lukas Kiehn
+    Copyright (C) 2025  Kim Kiehn
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

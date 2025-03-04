@@ -898,7 +898,7 @@ struct ImageVarietyElem{S <: RingElem, T <: MPolyRingElem{S}, V <: FracFieldElem
         #######################################################################
 
         # A free line written on the form (k1 k2; a b; c d) is equivalent to
-        # (k1 / (a d - b c) k2 / (a d - b c); 1 0; 0 1), hence completely
+        # (k1/(a*d - b*c) k2/(a*d - b*c); 1 0; 0 1), hence completely
         # determined by two variables.
         for ix in 1:m
             for jx in 1:lf

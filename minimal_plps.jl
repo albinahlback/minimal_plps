@@ -898,8 +898,8 @@ struct ImageVarietyElem{S <: RingElem, T <: MPolyRingElem{S}, V <: FracFieldElem
         #######################################################################
 
         # A free line written on the form (k1 k2; a b; c d) is equivalent to
-        # (k1/(a*d - b*c) k2/(a*d - b*c); 1 0; 0 1), hence completely
-        # determined by two variables.
+        # the cross-product between its column vectors, hence determined by two
+        # variables.
         for ix in 1:m
             for jx in 1:lf
                 k1 = lfs[jx][1, 1]
@@ -908,9 +908,6 @@ struct ImageVarietyElem{S <: RingElem, T <: MPolyRingElem{S}, V <: FracFieldElem
                 bk = lfs[jx][2, 2]
                 ck = lfs[jx][3, 1]
                 dk = lfs[jx][3, 2]
-                # admbc = ak * dk - bk * ck
-                # new_entries[2 * (jx - 1) + 1] = k1 // admbc
-                # new_entries[2 * (jx - 1) + 2] = k2 // admbc
                 v1 = ak * dk - bk * ck
                 v2 = ck * k2 - k1 * dk
                 v3 = k1 * bk - ak * k2

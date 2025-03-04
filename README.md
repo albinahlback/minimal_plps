@@ -4,8 +4,6 @@ This code is supplementary material for the article
 
 > PLMP -- Point-Line Minimal Problems for Projective SfM
 
-by Kim Lukas
-
 ## Prerequisites
 
 We use [Julia](https://julialang.org/) for the computations.  If you intend to

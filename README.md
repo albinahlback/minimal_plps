@@ -55,8 +55,9 @@ To check whether a problem `pb` is minimal, run
 ```julia
 is_minimal(pb)
 ```
-This runs a numerical check of minimality (as opposed to symbolic, due to being
-computationally infeasible).  To explicitly set the number of evaluations to
+This runs a randomized numerical check of minimality (as opposed to symbolical,
+due to being computationally infeasible).  To explicitly set the number of
+evaluations to
 `n` used in `is_minimal`, run `is_minimal(pb, numevals=n)`.
 
 All minimal problems for $p^f + p^d < 7$ and $p^f + p^d = 7$ are stored in
@@ -112,7 +113,9 @@ For modern mid-end computers, this is expected to terminate within an hour or
 so for all problems with three to four views.  The most computationally heavy
 problem in four views (the one in the class
 $(m, p^f, p^d, l^f, l^a) = (4, 1, 0, 3, 6)$) is factorized into subproblems as
-a special case in order to make it computationally feasible.
+a special case in order to make it computationally feasible, and this code can
+be found in the function `degree_m4_l9`, which corresponds to Example D.1 in
+the article.
 
 While it is expected to be able to verify some problems for higher views, the
 memory consumption and run time grows very fast, in particular for higher line
@@ -124,3 +127,12 @@ To run Example 4.12 in the article, open Julia and run
 ```julia
 include("example_4-12.jl")
 ```
+
+## Running Example D.1
+
+As mentioned under the section about Gröbner basis computations, Example D.1
+corresponds to the function `degree_m4_l9`.  Hence, simply run
+```julia
+degree_m4_l9()
+```
+to get the degree of this problem.

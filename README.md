@@ -53,11 +53,10 @@ To check whether a problem `pb` is minimal, run
 ```julia
 is_minimal(pb)
 ```
-This runs a check of minimality by evaluating the generators of the polynomial
-ring to random numbers, and then computing the determinant (as opposed to
-symbolical, due to being computationally infeasible).  By default, this is done
-1000 times.  To explicitly set the number of evaluations to `n` used in
-`is_minimal`, run `is_minimal(pb, numevals=n)`.
+his runs a check of minimality by computing the rank of the Jacobian matrix
+over a finite field 1000 number of times; see Remark 4.6 in article.  To
+explicitly set the number of evaluations to `n` used in `is_minimal`, run
+`is_minimal(pb, numevals=n)`.
 
 All minimal problems for $p^f + p^d < 7$ and $p^f + p^d = 7$ are stored in
 `minimal_problems` and `minimal_problems_7pts`, respectively.  To check that

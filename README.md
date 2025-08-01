@@ -112,7 +112,7 @@ with three views.
 For modern mid-end computers, this is expected to terminate within an hour or
 so for all problems with three to four views.  The most computationally heavy
 problem in four views (the one in the class
-$(m, p^f, p^d, l^f, l^a) = (4, 1, 0, 3, 6)$) is factorized into subproblems as
+$(m, p^f, p^d, l^f, l^a) = (4, 1, 0, 3, 6)$ ) is factorized into subproblems as
 a special case in order to make it computationally feasible, and this code can
 be found in the function `degree_m4_l9`, which corresponds to Example D.1 in
 the article.

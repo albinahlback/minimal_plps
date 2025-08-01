@@ -55,7 +55,7 @@ To check whether a problem `pb` is minimal, run
 ```julia
 is_minimal(pb)
 ```
-his runs a check of minimality by computing the rank of the Jacobian matrix
+this runs a check of minimality by computing the rank of the Jacobian matrix
 over a finite field 1000 number of times; see Remark 4.6 in article.  To
 explicitly set the number of evaluations to `n` used in `is_minimal`, run
 `is_minimal(pb, numevals=n)`.
